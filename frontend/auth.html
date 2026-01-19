@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenue - Task Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container" style="margin-top: 10vh;">
+        <h1 id="auth-title" style="text-align: center;">Connexion</h1>
+        <form id="authForm" style="display: flex; flex-direction: column; gap: 15px;">
+            <input type="text" id="username" placeholder="Nom d'utilisateur" required>
+            <input type="password" id="password" placeholder="Mot de passe (8+ caractères)" required>
+            <button type="submit" id="submit-btn" style="width: 100%;">Se connecter</button>
+        </form>
+        <p id="toggle-auth" style="text-align: center; margin-top: 20px; font-size: 0.9rem; color: #64748b;">
+            Pas de compte ? <a href="#" onclick="toggleAuth()" style="color: var(--primary); font-weight: 600;">S'inscrire</a>
+        </p>
+    </div>
+
+    <script>
+        let isLogin = true;
+        function toggleAuth() {
+            isLogin = !isLogin; 
+            document.getElementById('auth-title').innerText = isLogin ? "Connexion" : "Inscription"; 
+            document.getElementById('submit-btn').innerText = isLogin ? "Se connecter" : "S'inscrire"; 
+            document.getElementById('toggle-auth').innerHTML = isLogin 
+                ? 'Pas de compte ? <a href="#" onclick="toggleAuth()" style="color: var(--primary); font-weight: 600;">S\'inscrire</a>'
+                : 'Déjà un compte ? <a href="#" onclick="toggleAuth()" style="color: var(--primary); font-weight: 600;">Se connecter</a>'; 
+        }
+
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register'; 
+
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                }); 
+
+                if (!res.ok) throw new Error(isLogin ? "Identifiants incorrects" : "Erreur lors de l'inscription"); 
+
+                if (isLogin) {
+                    const data = await res.json();
+                    localStorage.setItem('token', data.token); 
+                    window.location.href = 'index.html'; 
+                } else {
+                    alert("Compte créé avec succès !"); 
+                    toggleAuth(); 
+                }
+            } catch (err) { alert(err.message); }
+        });
+    </script>
+</body>
+</html>

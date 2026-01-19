@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>TaskFlow – Gestion</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app-container">
+    <header class="main-header">
+        <div class="logo-area">
+            <h1>Gestion des tâches</h1>
+            <p class="date-subtitle">Créer, importer et organiser vos habitudes</p>
+        </div>
+        <nav>
+            <a href="index.html" class="btn-nav">← Dashboard</a>
+        </nav>
+    </header>
+
+    <main class="content manage-grid">
+
+        <!-- ================== CRÉATION / IMPORT ================== -->
+        <section class="card">
+            <div class="card-header">
+                <h2>Nouvelle tâche</h2>
+            </div>
+
+            <form id="task-form" class="manage-form">
+                <input type="text" id="task-title" placeholder="Nom de la tâche">
+
+                <div class="days-picker">
+                    <label><input type="checkbox" name="days" value="1"> Lun</label>
+                    <label><input type="checkbox" name="days" value="2"> Mar</label>
+                    <label><input type="checkbox" name="days" value="3"> Mer</label>
+                    <label><input type="checkbox" name="days" value="4"> Jeu</label>
+                    <label><input type="checkbox" name="days" value="5"> Ven</label>
+                    <label><input type="checkbox" name="days" value="6"> Sam</label>
+                    <label><input type="checkbox" name="days" value="7"> Dim</label>
+                </div>
+
+                <button type="submit" class="btn-primary">Créer la tâche</button>
+            </form>
+
+            <!-- IMPORT JSON -->
+            <div class="import-box">
+                <input type="file" id="importFile" accept=".json" hidden>
+                <button class="btn-secondary" onclick="document.getElementById('importFile').click()">
+                    📂 Importer un fichier JSON
+                </button>
+            </div>
+        </section>
+
+        <!-- ================== LISTE + FILTRES ================== -->
+        <section class="card">
+            <div class="card-header">
+                <h2>Toutes mes tâches</h2>
+            </div>
+
+            <!-- Filtres -->
+            <div class="filters">
+                <input type="text" id="searchInput" placeholder="🔍 Rechercher une tâche">
+                <div class="days-filter">
+                    <label><input type="checkbox" value="1"> Lun</label>
+                    <label><input type="checkbox" value="2"> Mar</label>
+                    <label><input type="checkbox" value="3"> Mer</label>
+                    <label><input type="checkbox" value="4"> Jeu</label>
+                    <label><input type="checkbox" value="5"> Ven</label>
+                    <label><input type="checkbox" value="6"> Sam</label>
+                    <label><input type="checkbox" value="7"> Dim</label>
+                </div>
+            </div>
+
+            <div id="all-tasks" class="task-manage-list"></div>
+        </section>
+
+    </main>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
+

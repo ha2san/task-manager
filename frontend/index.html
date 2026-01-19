@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header class="main-header">
+            <div class="logo-area">
+                <h1>Ma Journée</h1>
+                <p id="current-date" class="date-subtitle"></p>
+            </div>
+            <nav>
+                <a href="manage.html" class="btn-nav">Configuration</a>
+                <button onclick="logout()" class="btn-logout">Déconnexion</button>
+            </nav>
+        </header>
+
+        <main class="content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Tâches prévues</h2>
+                </div>
+                <ul id="tasks" class="task-list">
+                    <li class="loading">Chargement de vos tâches...</li>
+                </ul>
+            </div>
+        </main>
+
+        <footer class="stats-section">
+            <div class="stats-header">
+                <h3>Analyse de productivité</h3>
+                <p>Activité des 30 derniers jours</p>
+            </div>
+
+            <div id="heatmap-container" class="heatmap-grid">
+                </div>
+
+            <div class="heatmap-legend">
+                <span>Moins</span>
+                <div class="legend-box" style="background: #ebedf0"></div>
+                <div class="legend-box" style="background: #9be9a8"></div>
+                <div class="legend-box" style="background: #40c463"></div>
+                <div class="legend-box" style="background: #216e39"></div>
+                <span>Plus</span>
+            </div>
+
+            <div class="user-totals">
+                <div class="total-item">
+                    <span class="total-label">Tâches créées</span>
+                    <span id="stat-total-created" class="total-value">0</span>
+                </div>
+                <div class="total-divider"></div>
+                <div class="total-item">
+                    <span class="total-label">Accomplissements</span>
+                    <span id="stat-total-done" class="total-value">0</span>
+                </div>
+                <div class="total-divider"></div>
+                <div class="total-item">
+                    <span class="total-label">Taux de réussite</span>
+                    <span id="stat-success-rate" class="total-value">0%</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Affichage de la date du jour
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('fr-FR', options);
+
+        // Fonction de déconnexion simple
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

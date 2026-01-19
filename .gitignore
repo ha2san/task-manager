@@ -1,0 +1,6 @@
+.env
+backend/target/
+backend/.sqlx/
+scripts/
+contenu.txt
+test.json
