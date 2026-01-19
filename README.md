@@ -1,164 +1,145 @@
 # Task Manager
 
-A modern, full-stack task management application designed for daily habit tracking and recurring routines. Built with a high-performance **Rust** backend and a lightweight **Vanilla JS** frontend, the application allows users to schedule tasks on specific days of the week and track daily completion status.
+A full-stack habit tracking and task management application built with Rust and vanilla JavaScript. This system allows users to create recurring tasks based on days of the week, track daily completions, and visualize productivity through a 30-day activity heatmap. 
 
----
+## Features
 
-## 🚀 Key Features
-
-* 
-**Recurring Scheduling**: Create tasks that repeat only on specific days of the week.
+* **User Authentication**: Secure registration and login using Argon2 password hashing and JWT-based session management. 
 
 
-* 
-**Daily Tracking**: An "Aujourd'hui" (Today) view that shows only the tasks relevant to the current day.
+* **Recurring Task Management**: Define tasks that repeat on specific days of the week. 
 
 
-* 
-**Completion History**: Toggle tasks as complete/incomplete with persistent tracking in the database.
+* **Daily Tracking**: A dashboard specifically for "Today" that displays only relevant tasks for the current day. 
 
 
-* 
-**Full CRUD**: A dedicated management interface to edit task titles, update scheduled days, or delete tasks.
+* **Productivity Analytics**: A heatmap visualization of the last 30 days and global statistics on task completion. 
 
 
-* 
-**Secure Authentication**: User registration and login system featuring **Argon2** password hashing and **JWT** (JSON Web Token) authentication.
+* **Task Organization**: Capabilities for soft-deleting, archiving, and filtering tasks by title or scheduled days. 
 
 
-* 
-**Modern UI**: A clean, responsive interface built with CSS variables, featuring a modal-based editing system and hover transitions.
+* **Data Portability**: Import tasks from JSON files for quick setup. 
 
 
 
----
-
-## 🛠 Tech Stack
+## Technical Stack
 
 ### Backend
 
-* 
-**Language**: Rust (Edition 2024).
+* **Language**: Rust (Edition 2024) 
 
 
-* 
-**Framework**: [Axum](https://github.com/tokio-rs/axum) for high-performance routing.
+* **Framework**: Axum 
 
 
-* 
-**Database**: PostgreSQL with [SQLx](https://github.com/launchbadge/sqlx) for type-safe asynchronous queries.
+* **Database**: PostgreSQL with SQLx for type-safe asynchronous queries. 
 
 
-* 
-**Auth**: Argon2 for hashing and `jsonwebtoken` for secure sessions.
-
-
-* 
-**Runtime**: Tokio.
+* **Authentication**: Argon2 (hashing) and jsonwebtoken (JWT). 
 
 
 
 ### Frontend
 
-* 
-**Architecture**: Vanilla JavaScript (ES6+) for zero-dependency speed.
+* **Logic**: Vanilla JavaScript with asynchronous fetch operations. 
 
 
-* 
-**Styling**: Custom CSS3 with Inter font and responsive layouts.
+* **Styling**: Custom CSS with a responsive design for mobile and desktop. 
 
 
-* 
-**State**: LocalStorage-based JWT persistence.
+* **Visualization**: Dynamic heatmap rendering based on completion percentages. 
 
 
 
 ### Infrastructure
 
-* 
-**Containerization**: Docker & Docker Compose for easy deployment.
+* **Containerization**: Docker and Docker Compose. 
 
 
-* 
-**Migrations**: Automated SQL migrations managed by the Rust backend on startup.
+* **Migrations**: Internal database migration handling on startup. 
 
 
 
----
-
-## 📦 Installation & Setup
+## Getting Started
 
 ### Prerequisites
 
-* [Docker](https://www.docker.com/) and Docker Compose installed.
+* Docker and Docker Compose
+* A `.env` file in the root directory (refer to the environment configuration section)
 
-### Quick Start
+### Installation
 
-1. **Clone the repository**:
-```bash
-git clone <your-repo-url>
-cd task-manager
+1. Clone the repository and ensure you are in the project root.
+2. Configure your `.env` file:
+```env
+DATABASE_URL=postgres://task:task@db:5432/taskdb
+JWT_SECRET=your_random_secret_string
+POSTGRES_USER=task
+POSTGRES_PASSWORD=task
+POSTGRES_DB=taskdb
 
 ```
 
 
-2. **Launch the application**:
+3. Launch the application using Docker Compose:
 ```bash
 docker-compose up --build
 
 ```
 
 
-3. **Access the app**:
-* Open your browser to `http://localhost:3000`.
+4. Access the application at `http://localhost:3000`.
+
+## API Routes
+
+### Authentication
+
+* `POST /api/auth/register`: Create a new user account. 
 
 
-* Register a new account (passwords must be at least 8 characters).
+* 
+`POST /api/auth/login`: Authenticate and receive a JWT. 
 
 
 
+### Tasks
+
+* `GET /api/tasks`: Retrieve tasks scheduled for the current date. 
 
 
----
+* `GET /api/tasks/all`: Retrieve all non-deleted tasks for the user. 
 
-## 📂 Project Structure
+
+* `POST /api/tasks`: Create a new task with recurrence days. 
+
+
+* `POST /api/tasks/:id/toggle`: Toggle the completion status for today. 
+
+
+* `PATCH /api/tasks/:id`: Archive or activate a task. 
+
+
+* `DELETE /api/tasks/:id`: Soft-delete a task. 
+
+
+
+### Analytics
+
+* `GET /api/stats`: Retrieve 30-day history and global completion totals. 
+
+
+
+## Project Structure
 
 ```text
-├── backend/
-[cite_start]│   ├── migrations/    # SQL database schema [cite: 2-6]
-│   ├── src/
-[cite_start]│   │   ├── auth.rs    # JWT & Argon2 logic [cite: 7]
-[cite_start]│   │   ├── db.rs      # SQLx pool & migrations [cite: 14]
-[cite_start]│   │   ├── main.rs    # Server entry point [cite: 17]
-[cite_start]│   │   ├── models.rs  # Rust structs for API [cite: 24]
-[cite_start]│   │   ├── routes.rs  # Task CRUD handlers [cite: 34]
-[cite_start]│   │   └── middleware.rs # JWT Auth guard [cite: 21]
-├── frontend/
-[cite_start]│   ├── app.js         # API communication logic [cite: 58]
-[cite_start]│   ├── auth.html      # Login/Register page [cite: 71]
-[cite_start]│   ├── index.html     # Today's task view [cite: 83]
-[cite_start]│   ├── manage.html    # Full catalogue management [cite: 86]
-[cite_start]│   └── style.css      # Custom UI design [cite: 104]
-[cite_start]└── docker-compose.yml # Orchestration [cite: 57]
+.
+├── backend                 # Rust source code
+│   ├── migrations          # SQL initialization scripts
+│   └── src                 # API logic, models, and middleware
+├── frontend                # Web interface (HTML, CSS, JS)
+├── docker-compose.yml      # Orchestration
+└── Dockerfile              # Multi-stage build for Rust and Frontend
 
 ```
 
----
-
-## 🛡 Environment Variables
-
-The application can be configured via environment variables in the `docker-compose.yml`:
-
-| Variable | Description | Default |
-| --- | --- | --- |
-| `DATABASE_URL` | Postgres connection string | <br>`postgres://task:task@db:5432/taskdb` 
-
- |
-| `JWT_SECRET` | Secret key for token signing | <br>`changez_moi_en_production_123456789` 
-
- |
-| `FRONTEND_PATH` | Path to serve static files | <br>`frontend` 
-
- |
-
-Would you like me to add a section on the specific API endpoints or more detailed developer instructions?
