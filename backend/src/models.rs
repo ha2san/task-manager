@@ -37,6 +37,8 @@ pub struct Task {
     pub days: Vec<i32>,
     #[sqlx(default)]
     pub completed: bool,
+    #[sqlx(default)]
+    pub priority: i32,
 }
 
 #[derive(Deserialize)]

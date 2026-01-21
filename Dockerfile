@@ -53,7 +53,7 @@ RUN chmod +x wait-for-it.sh
 
 # Configuration
 #ENV DATABASE_URL=postgres://task:task@db:5432/taskdb
-ENV SQLX_OFFLINE=true 
+#ENV SQLX_OFFLINE=true 
 
 EXPOSE 3000
 

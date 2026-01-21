@@ -36,8 +36,10 @@ CREATE TABLE task_completions (
     task_id INTEGER REFERENCES tasks(id) ON DELETE CASCADE,
     date DATE NOT NULL,
     completed BOOLEAN NOT NULL DEFAULT true,
+    priority INTEGER NOT NULL DEFAULT 0, 
     PRIMARY KEY (task_id, date)
 );
+
 
 -- =========================
 -- INDEXES

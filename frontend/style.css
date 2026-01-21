@@ -419,3 +419,170 @@ input[type="checkbox"] {
     border-radius: 6px;
 }
 
+
+.task-item {
+    cursor: grab;
+}
+.task-item:active {
+    cursor: grabbing;
+}
+
+
+/* =========================================================
+   RESPONSIVE UPDATES FOR IPHONE
+========================================================= */
+
+/* Small screens */
+@media (max-width: 480px) {
+    .app-container {
+        padding: 1rem;
+    }
+
+    /* Header */
+    .main-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    nav {
+        width: 100%;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+
+    .btn-nav,
+    .btn-logout {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+    }
+
+    .logo-area h1 {
+        font-size: 1.4rem;
+    }
+
+    .date-subtitle {
+        font-size: 0.8rem;
+    }
+
+    /* Dashboard / Cards */
+    .card {
+        border-radius: 12px;
+    }
+
+    /* Tasks list */
+    .task-list .task-item {
+        padding: 0.8rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    /* Checkbox size for touch */
+    input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* Heatmap */
+    .heatmap-grid {
+        grid-template-columns: repeat(auto-fill, minmax(18px, 1fr));
+        gap: 3px;
+    }
+
+    .heatmap-square {
+        border-radius: 3px;
+    }
+
+    /* Totals section */
+    .user-totals {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    .total-item {
+        font-size: 0.9rem;
+    }
+
+    .total-value {
+        font-size: 1.2rem;
+    }
+
+    .total-divider {
+        width: 80%;
+        height: 1px;
+    }
+
+    /* Manage page grid */
+    .manage-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Forms */
+    .manage-form input[type="text"] {
+        font-size: 0.85rem;
+        padding: 0.6rem;
+    }
+
+    .days-picker label,
+    .days-filter label {
+        font-size: 0.65rem;
+        padding: 4px 6px;
+    }
+
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger {
+        font-size: 0.8rem;
+        padding: 0.5rem;
+    }
+
+    /* Manage task cards */
+    .manage-task-card {
+        padding: 0.8rem;
+        gap: 0.5rem;
+    }
+
+    .edit-title {
+        font-size: 0.9rem;
+    }
+}
+
+/* Extra small iPhone SE (portrait) */
+@media (max-width: 360px) {
+    .heatmap-grid {
+        grid-template-columns: repeat(auto-fill, minmax(15px, 1fr));
+        gap: 2px;
+    }
+
+    .task-item span {
+        font-size: 0.85rem;
+    }
+
+    .edit-days label,
+    .days-picker label,
+    .days-filter label {
+        font-size: 0.6rem;
+        padding: 3px 5px;
+    }
+
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger {
+        font-size: 0.75rem;
+        padding: 0.4rem;
+    }
+}
+
+/* Make scrollable lists on small screens */
+@media (max-width: 480px) {
+    .task-list,
+    .task-manage-list {
+        overflow-x: auto;
+    }
+}
+
+/* Ensure touch-friendly hit areas */
+.task-item input[type="checkbox"],
+.manage-actions button {
+    min-touch-target-size: 44px; /* Recommended by Apple */
+}
+

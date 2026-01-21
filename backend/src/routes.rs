@@ -6,11 +6,12 @@ use axum::{
 };
 use sqlx::PgPool;
 use uuid::Uuid;
+use serde::Deserialize;
 
 use crate::models::{CreateTaskRequest, UpdateTaskRequest};
 
 /// Point d'entrée pour les routes de l'API des tâches.
-/// Renommé en 'routes' pour correspondre à l'appel dans main.rs. [cite: 18]
+/// Renommé en 'routes' pour correspondre à l'appel dans main.rs.
 pub fn routes(pool: PgPool) -> Router {
     Router::new()
         .route("/tasks", get(get_today_tasks).post(create_task))
@@ -21,6 +22,7 @@ pub fn routes(pool: PgPool) -> Router {
         )
         .route("/tasks/:id/toggle", post(toggle_task))
         .route("/stats", get(get_stats))
+        .route("/tasks/priorities", post(update_task_priorities))
         .with_state(pool)
 }
 
@@ -29,12 +31,13 @@ pub fn routes(pool: PgPool) -> Router {
 /// Récupère les tâches prévues pour aujourd'hui pour l'utilisateur connecté.
 pub async fn get_today_tasks(
     State(pool): State<PgPool>,
-    Extension(user_id): Extension<Uuid>, // Utilise Uuid comme défini dans le middleware [cite: 23]
+    Extension(user_id): Extension<Uuid>, // Utilise Uuid comme défini dans le middleware 
 ) -> Result<Json<Vec<serde_json::Value>>, StatusCode> {
     let rows = sqlx::query!(
         r#"
         SELECT t.id, t.title, t.active, 
-               COALESCE(tc.completed, false) as "completed!"
+            COALESCE(tc.completed, false) as "completed!",
+            COALESCE(tc.priority, 0) as "priority!"
         FROM tasks t
         JOIN task_days td ON t.id = td.task_id
         LEFT JOIN task_completions tc ON t.id = tc.task_id AND tc.date = current_date
@@ -44,9 +47,9 @@ pub async fn get_today_tasks(
         "#,
         user_id
     )
-    .fetch_all(&pool)
-    .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .fetch_all(&pool)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     let tasks = rows
         .into_iter()
@@ -55,10 +58,12 @@ pub async fn get_today_tasks(
                 "id": r.id,
                 "title": r.title,
                 "active": r.active,
-                "completed": r.completed
+                "completed": r.completed,
+                "priority": r.priority
             })
+
         })
-        .collect();
+    .collect();
 
     Ok(Json(tasks))
 }
@@ -79,9 +84,9 @@ pub async fn create_task(
         user_id,
         payload.title
     )
-    .fetch_one(&mut *tx)
-    .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .fetch_one(&mut *tx)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     for day in payload.days {
         sqlx::query!(
@@ -89,10 +94,10 @@ pub async fn create_task(
             task.id,
             day
         )
-        .execute(&mut *tx)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    }
+            .execute(&mut *tx)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        }
 
     tx.commit()
         .await
@@ -115,9 +120,9 @@ pub async fn get_all_tasks(
         "#,
         user_id
     )
-    .fetch_all(&pool)
-    .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .fetch_all(&pool)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     let tasks = rows
         .into_iter()
@@ -129,7 +134,7 @@ pub async fn get_all_tasks(
                 "days": r.days
             })
         })
-        .collect();
+    .collect();
 
     Ok(Json(tasks))
 }
@@ -147,9 +152,9 @@ pub async fn toggle_task(
         "#,
         id
     )
-    .execute(&pool)
-    .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .execute(&pool)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(StatusCode::OK)
 }
@@ -192,10 +197,10 @@ pub async fn update_task(
                 id,
                 day
             )
-            .execute(&mut *tx)
-            .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-        }
+                .execute(&mut *tx)
+                .await
+                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+            }
         tx.commit()
             .await
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -258,8 +263,8 @@ pub async fn get_stats(
         ORDER BY s.stats_date ASC
         "#,
         user_id
-    )
-    .fetch_all(&pool).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+            )
+            .fetch_all(&pool).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     // 2. Requête pour les totaux globaux
     let totals = sqlx::query!(
@@ -272,9 +277,9 @@ pub async fn get_stats(
         "#,
         user_id
     )
-    .fetch_one(&pool)
-    .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .fetch_one(&pool)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     let history: Vec<serde_json::Value> = rows
         .into_iter()
@@ -286,13 +291,79 @@ pub async fn get_stats(
             };
             serde_json::json!({ "date": r.date, "percent": percent })
         })
-        .collect();
+    .collect();
+
+    // Taux du jour
+    let today_stats = sqlx::query!(
+        r#"
+    SELECT 
+        COUNT(*) FILTER (WHERE tc.completed = true) as completed_today,
+        COUNT(t.id) as scheduled_today
+    FROM tasks t
+    JOIN task_days td ON t.id = td.task_id
+    LEFT JOIN task_completions tc 
+        ON t.id = tc.task_id AND tc.date = current_date
+    WHERE t.user_id = $1 AND t.deleted = false AND t.active = true
+        AND td.day_of_week = extract(isodow from current_date)
+    "#,
+    user_id
+    )
+        .fetch_one(&pool)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    // Taux du jour
+    let completed_today = today_stats.completed_today.unwrap_or(0) as f64;
+    let scheduled_today = today_stats.scheduled_today.unwrap_or(0) as f64;
+
+    let today_percent = if scheduled_today > 0.0 {
+        (completed_today / scheduled_today * 100.0).round() as i32
+    } else {
+        0
+    };
+
 
     Ok(Json(serde_json::json!({
         "history": history,
         "summary": {
             "total_created": totals.total_tasks,
-            "total_completed_ever": totals.total_done
+            "total_completed_ever": totals.total_done,
+            "today_percent": today_percent
         }
     })))
 }
+
+
+#[derive(Deserialize)]
+pub struct UpdatePrioritiesRequest {
+    pub ordered_task_ids: Vec<i32>, // ordered from highest to lowest priority
+}
+
+pub async fn update_task_priorities(
+    State(pool): State<PgPool>,
+    Extension(user_id): Extension<Uuid>,
+    Json(payload): Json<UpdatePrioritiesRequest>,
+) -> Result<StatusCode, StatusCode> {
+    let mut tx = pool.begin().await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    for (priority, task_id) in payload.ordered_task_ids.iter().enumerate() {
+        sqlx::query!(
+            r#"
+            INSERT INTO task_completions (task_id, date, completed, priority)
+            VALUES ($1, current_date, COALESCE(
+                (SELECT completed FROM task_completions WHERE task_id=$1 AND date=current_date), false), $2)
+            ON CONFLICT (task_id, date)
+            DO UPDATE SET priority = $2
+            "#,
+            task_id,
+            priority as i32
+        )
+            .execute(&mut *tx)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        }
+
+    tx.commit().await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    Ok(StatusCode::OK)
+}
+
