@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO task_completions (task_id, date, completed)\n        VALUES ($1, current_date, true)\n        ON CONFLICT (task_id, date) DO UPDATE SET completed = NOT task_completions.completed\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "4378dd660240282c398b89b09825cd4c561721b9af07af55dcd0d486fb5a67e2"
+}

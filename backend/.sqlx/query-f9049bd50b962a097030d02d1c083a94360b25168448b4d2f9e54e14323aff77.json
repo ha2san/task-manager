@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO task_completions (task_id, date, completed, priority)\n            VALUES ($1, current_date, COALESCE(\n                (SELECT completed FROM task_completions WHERE task_id=$1 AND date=current_date), false), $2)\n            ON CONFLICT (task_id, date)\n            DO UPDATE SET priority = $2\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f9049bd50b962a097030d02d1c083a94360b25168448b4d2f9e54e14323aff77"
+}
