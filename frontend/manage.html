@@ -891,29 +891,29 @@
             function nextPage() {
                 const totalPages = Math.ceil(filteredTasks.length / tasksPerPage);
                 if (currentPage < totalPages) {
-                    currentPage++;
-                    renderTasks();
-                    updatePagination();
-                }
-            }
+                               currentPage++;
+                               renderTasks();
+                               updatePagination();
+                               }
+                               }
 
-            // Sélection multiple
-            function toggleSelectAll() {
-                const selectAll = document.getElementById('select-all').checked;
-                const checkboxes = document.querySelectorAll('.task-select');
+                               // Sélection multiple
+                               function toggleSelectAll() {
+                               const selectAll = document.getElementById('select-all').checked;
+                               const checkboxes = document.querySelectorAll('.task-select');
 
-                selectedTaskIds.clear();
+                               selectedTaskIds.clear();
 
-                checkboxes.forEach(checkbox => {
-                    checkbox.checked = selectAll;
-                    if (selectAll) {
-                        const taskId = parseInt(checkbox.dataset.taskId);
-                        selectedTaskIds.add(taskId);
-                    }
-                });
+                               checkboxes.forEach(checkbox => {
+                                   checkbox.checked = selectAll;
+                                   if (selectAll) {
+                                       const taskId = parseInt(checkbox.dataset.taskId);
+                                       selectedTaskIds.add(taskId);
+                                   }
+                               });
 
-                updateSelectionUI();
-            }
+                                   updateSelectionUI();
+                               }
 
             function updateSelectAllCheckbox() {
                 const checkboxes = document.querySelectorAll('.task-select');
@@ -1095,14 +1095,7 @@
                 return div.innerHTML;
             }
 
-            function showNotification(message, type = 'info') {
-                // Utiliser la fonction de app.js si disponible
-                if (typeof window.showNotification === 'function') {
-                    window.showNotification(message, type);
-                } else {
-                    alert(`${type}: ${message}`);
-                }
-            }
+
         </script>
     </body>
 </html>

@@ -724,6 +724,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // =========================================================
 // FONCTIONS GLOBALES POUR LES AUTRES PAGES
 // =========================================================
+window.appShowNotification = showNotification;
 window.showNotification = showNotification;
 window.apiFetch = apiFetch;
 window.logout = logout;
