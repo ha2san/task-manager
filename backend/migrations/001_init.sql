@@ -17,7 +17,8 @@ CREATE TABLE tasks (
     title TEXT NOT NULL CHECK (length(trim(title)) > 0),
     active BOOLEAN NOT NULL DEFAULT true,
     deleted BOOLEAN NOT NULL DEFAULT false,
-    created_at TIMESTAMP NOT NULL DEFAULT now()
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    has_subtasks BOOLEAN NOT NULL DEFAULT false
 );
 
 -- =========================
@@ -40,6 +41,18 @@ CREATE TABLE task_completions (
     PRIMARY KEY (task_id, date)
 );
 
+-- =========================
+-- SUBTASKS
+-- =========================
+CREATE TABLE subtasks (
+    id SERIAL PRIMARY KEY,
+    task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+    title TEXT NOT NULL CHECK (length(trim(title)) > 0),
+    completed BOOLEAN NOT NULL DEFAULT false,
+    priority INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT now()
+);
+
 
 -- =========================
 -- INDEXES
@@ -47,4 +60,5 @@ CREATE TABLE task_completions (
 CREATE INDEX idx_tasks_user_id ON tasks(user_id);
 CREATE INDEX idx_task_days_day ON task_days(day_of_week);
 CREATE INDEX idx_task_completions_date ON task_completions(task_id, date);
-
+CREATE INDEX idx_subtasks_task_id ON subtasks(task_id);
+CREATE INDEX idx_subtasks_completed ON subtasks(completed);

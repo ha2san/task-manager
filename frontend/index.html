@@ -1,90 +1,705 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskFlow - Dashboard</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-
-</head>
-<body>
-    <div class="app-container">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Journal - Tableau de bord</title>
+        <meta name="description" content="Gestionnaire de tâches quotidiennes et suivi de productivité">
+        <link rel="stylesheet" href="style.css">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✅</text></svg>">
+    </head>
+    <body>
+        <!-- ================== HEADER FIXE ================== -->
         <header class="main-header">
-            <div class="logo-area">
-                <h1>Ma Journée</h1>
-                <p id="current-date" class="date-subtitle"></p>
+            <div class="header-container">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="logo-text">
+                        <h1>Journal</h1>
+                        <p class="tagline">Votre journal de bord quotidien</p>
+                    </div>
+                </div>
+
+                <nav class="header-nav">
+                    <a href="index.html" class="nav-link active">
+                        <i class="fas fa-home"></i>
+                        <span>Accueil</span>
+                    </a>
+                    <a href="manage.html" class="nav-link">
+                        <i class="fas fa-cog"></i>
+                        <span>Gérer</span>
+                    </a>
+                    <button class="user-menu" onclick="toggleUserMenu()">
+                        <i class="fas fa-user-circle"></i>
+                        <span id="username-display">Utilisateur</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+
+                    <!-- Menu utilisateur déroulant -->
+                    <div id="user-dropdown" class="user-dropdown">
+                        <div class="user-info">
+                            <i class="fas fa-user-circle"></i>
+                            <div>
+                                <strong id="dropdown-username">Utilisateur</strong>
+                                <small>Connecté</small>
+                            </div>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item" onclick="toggleDarkMode()">
+                            <i class="fas fa-moon"></i>
+                            Mode sombre
+                        </a>
+                        <a href="#" class="dropdown-item" onclick="exportAllData()">
+                            <i class="fas fa-download"></i>
+                            Exporter données
+                        </a>
+                        <a href="#" class="dropdown-item" onclick="showHelp()">
+                            <i class="fas fa-question-circle"></i>
+                            Aide
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <button class="dropdown-item logout" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Déconnexion
+                        </button>
+                    </div>
+                </nav>
             </div>
-            <nav>
-                <a href="manage.html" class="btn-nav">Configuration</a>
-                <button onclick="logout()" class="btn-logout">Déconnexion</button>
-            </nav>
         </header>
 
-        <main class="content">
-            <div class="card">
-                <div class="card-header">
-                    <h2>Tâches prévues</h2>
+        <!-- ================== CONTENU PRINCIPAL (DÉFILEMENT) ================== -->
+        <main class="scroll-container">
+            <!-- Section 1: Tâches du jour -->
+            <section id="tasks-section" class="content-section">
+                <div class="section-header">
+                    <div class="section-title">
+                        <h2>
+                            <i class="fas fa-calendar-check"></i>
+                            Vos tâches du jour
+                        </h2>
+                        <div class="date-display">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span id="current-date">Chargement...</span>
+                        </div>
+                    </div>
+                    <div class="section-actions">
+                        <button class="btn-action" onclick="refreshTasks()">
+                            <i class="fas fa-sync-alt"></i>
+                            Actualiser
+                        </button>
+                        <button class="btn-action primary" onclick="window.location.href='manage.html'">
+                            <i class="fas fa-plus"></i>
+                            Nouvelle tâche
+                        </button>
+                    </div>
                 </div>
-                <ul id="tasks" class="task-list">
-                    <li class="loading">Chargement de vos tâches...</li>
-                </ul>
-            </div>
+
+                <!-- Filtres rapides -->
+                <div class="quick-filters">
+                    <button class="filter-btn active" onclick="filterTasks('all')">
+                        Toutes
+                        <span class="filter-count" id="count-all">0</span>
+                    </button>
+                    <button class="filter-btn" onclick="filterTasks('pending')">
+                        En attente
+                        <span class="filter-count" id="count-pending">0</span>
+                    </button>
+                    <button class="filter-btn" onclick="filterTasks('completed')">
+                        Terminées
+                        <span class="filter-count" id="count-completed">0</span>
+                    </button>
+                    <button class="filter-btn" onclick="filterTasks('subtasks')">
+                        Avec sous-tâches
+                        <span class="filter-count" id="count-subtasks">0</span>
+                    </button>
+                </div>
+
+                <!-- Liste des tâches -->
+                <div class="tasks-container">
+                    <div class="tasks-header">
+                        <h3>Tâches prévues pour aujourd'hui</h3>
+                        <div class="tasks-stats">
+                            <span class="stat-item">
+                                <i class="fas fa-tasks"></i>
+                                Total: <strong id="total-tasks-count">0</strong>
+                            </span>
+                            <span class="stat-item">
+                                <i class="fas fa-check"></i>
+                                Faites: <strong id="done-tasks-count">0</strong>
+                            </span>
+                            <span class="stat-item">
+                                <i class="fas fa-percentage"></i>
+                                Progression: <strong id="progress-percent">0%</strong>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div id="tasks-loading" class="loading-state">
+                        <div class="spinner"></div>
+                        <p>Chargement de vos tâches...</p>
+                    </div>
+
+                    <div id="tasks-empty" class="empty-state" style="display: none;">
+                        <i class="fas fa-clipboard-list"></i>
+                        <h3>Aucune tâche pour aujourd'hui</h3>
+                        <p>Profitez-en pour créer de nouvelles habitudes ou reposer vos tâches habituelles.</p>
+                        <button class="btn-action primary" onclick="window.location.href='manage.html'">
+                            <i class="fas fa-plus"></i>
+                            Créer ma première tâche
+                        </button>
+                    </div>
+
+                    <ul id="tasks-list" class="tasks-list">
+                        <!-- Les tâches seront insérées ici par JavaScript -->
+                    </ul>
+
+                    <!-- Tutoriel sous-tâches -->
+                    <div class="tutorial-card">
+                        <div class="tutorial-icon">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                        <div class="tutorial-content">
+                            <h4>Astuce : Utilisez les sous-tâches</h4>
+                            <p>Divisez vos grandes tâches en sous-tâches pour mieux suivre votre progression. Cliquez sur le bouton "+" sous une tâche pour ajouter une sous-tâche.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 2: Statistiques et Heatmap -->
+            <section id="stats-section" class="content-section">
+                <div class="section-header">
+                    <div class="section-title">
+                        <h2>
+                            <i class="fas fa-chart-line"></i>
+                            Vos statistiques
+                        </h2>
+                        <p class="section-subtitle">Suivez votre progression sur 30 jours</p>
+                    </div>
+                    <div class="period-selector">
+                        <button class="period-btn active" onclick="changePeriod('month')">30 jours</button>
+                        <button class="period-btn" onclick="changePeriod('week')">7 jours</button>
+                        <button class="period-btn" onclick="changePeriod('year')">1 an</button>
+                    </div>
+                </div>
+
+                <!-- Métriques principales -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="metric-info">
+                            <span class="metric-label">Taux de réussite</span>
+                            <span class="metric-value" id="success-rate">0%</span>
+                            <span class="metric-change" id="success-trend">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>0%</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon primary">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <div class="metric-info">
+                            <span class="metric-label">Taux du jour</span>
+                            <span class="metric-value" id="today-rate">0%</span>
+                            <span class="metric-change" id="today-trend">
+                                <i class="fas fa-minus"></i>
+                                <span>0%</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon warning">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                        <div class="metric-info">
+                            <span class="metric-label">Série actuelle</span>
+                            <span class="metric-value" id="current-streak">0 jours</span>
+                            <span class="metric-change" id="streak-trend">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>Record: 0</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-card">
+                            <div class="metric-icon info">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <div class="metric-info">
+                                <span class="metric-label">Productivité moyenne</span>
+                                <span class="metric-value" id="avg-productivity">0%</span>
+                                <span class="metric-change" id="productivity-trend">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>0%</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Heatmap -->
+                <div class="heatmap-card">
+                    <div class="heatmap-header">
+                        <h3>Activité des 30 derniers jours</h3>
+                        <div class="heatmap-legend">
+                            <span>Moins actif</span>
+                            <div class="legend-squares">
+                                <div class="legend-square" style="background-color: #ebedf0"></div>
+                                <div class="legend-square" style="background-color: #9be9a8"></div>
+                                <div class="legend-square" style="background-color: #40c463"></div>
+                                <div class="legend-square" style="background-color: #30a14e"></div>
+                                <div class="legend-square" style="background-color: #216e39"></div>
+                            </div>
+                            <span>Plus actif</span>
+                        </div>
+                    </div>
+                    <div id="heatmap-container" class="heatmap-container">
+                        <!-- Heatmap générée par JavaScript -->
+                    </div>
+                    <div class="heatmap-footer">
+                        <div class="heatmap-tooltip" id="heatmap-tooltip" style="display: none;">
+                            <div class="tooltip-date" id="tooltip-date"></div>
+                            <div class="tooltip-stats">
+                                <span>Complétées: <strong id="tooltip-completed">0</strong></span>
+                                <span>Prévues: <strong id="tooltip-scheduled">0</strong></span>
+                                <span>Taux: <strong id="tooltip-percent">0%</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Graphique de progression -->
+                <div class="progress-card">
+                    <div class="progress-header">
+                        <h3>Progression hebdomadaire</h3>
+                        <div class="progress-selector">
+                            <button class="progress-btn active" onclick="changeChartType('completion')">Complétion</button>
+                            <button class="progress-btn" onclick="changeChartType('productivity')">Productivité</button>
+                            <button class="progress-btn" onclick="changeChartType('consistency')">Constance</button>
+                        </div>
+                    </div>
+                    <div class="progress-chart">
+                        <canvas id="progress-chart"></canvas>
+                    </div>
+                    <div class="progress-summary">
+                        <div class="summary-item">
+                            <span class="summary-label">Meilleur jour</span>
+                            <span class="summary-value" id="best-day">-</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Moyenne</span>
+                            <span class="summary-value" id="avg-completion">0%</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Tendance</span>
+                            <span class="summary-value trend-up" id="completion-trend">Stable</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
         </main>
 
-        <footer class="stats-section">
-            <div class="stats-header">
-                <h3>Analyse de productivité</h3>
-                <p>Activité des 30 derniers jours</p>
+        <!-- ================== FOOTER ================== -->
+        <footer class="main-footer">
+            <div class="footer-container">
+                <div class="footer-section">
+                    <div class="footer-social">
+                        <div class="footer-logo">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Journal</span>
+                        </div>
+                        <p class="footer-description">
+                        Votre journal de bord quotidien.
+                        Suivez vos tâches et vos progrès.
+                        </p>
+                        <a href="#" class="social-link" title="Twitter">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="social-link" title="GitHub">
+                            <i class="fab fa-github"></i>
+                        </a>
+                        <a href="#" class="social-link" title="Discord">
+                            <i class="fab fa-discord"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Navigation</h4>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Accueil</a></li>
+                        <li><a href="manage.html">Gestion des tâches</a></li>
+                        <li><a href="#" onclick="showHelp()">Aide & Support</a></li>
+                        <li><a href="#" onclick="showAbout()">À propos</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Fonctionnalités</h4>
+                    <ul class="footer-links">
+                        <li><a href="#" onclick="showFeature('subtasks')">Sous-tâches</a></li>
+                        <li><a href="#" onclick="showFeature('stats')">Statistiques</a></li>
+                        <li><a href="#" onclick="showFeature('heatmap')">Heatmap</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4>Statistiques</h4>
+                    <div class="footer-stats">
+                        <div class="footer-stat">
+                            <span class="stat-number" id="footer-total">0</span>
+                            <span class="stat-label">Tâches créées</span>
+                        </div>
+                        <div class="footer-stat">
+                            <span class="stat-number" id="footer-completed">0</span>
+                            <span class="stat-label">Accomplissements</span>
+                        </div>
+                        <div class="footer-stat">
+                            <span class="stat-number" id="footer-streak">0</span>
+                            <span class="stat-label">Série actuelle</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div id="heatmap-container" class="heatmap-grid">
+            <div class="footer-bottom">
+                <div class="copyright">
+                    &copy; 2024 TaskFlow. Tous droits réservés.
+                    <span class="version">v2.1.0</span>
                 </div>
-
-            <div class="heatmap-legend">
-                <span>Moins</span>
-                <div class="legend-box" style="background: #ebedf0"></div>
-                <div class="legend-box" style="background: #9be9a8"></div>
-                <div class="legend-box" style="background: #40c463"></div>
-                <div class="legend-box" style="background: #216e39"></div>
-                <span>Plus</span>
-            </div>
-
-            <div class="user-totals">
-                <div class="total-item">
-                    <span class="total-label">Tâches créées</span>
-                    <span id="stat-total-created" class="total-value">0</span>
+                <div class="footer-links-bottom">
+                    <a href="#" onclick="showPrivacy()">Confidentialité</a>
+                    <a href="#" onclick="showTerms()">Conditions</a>
+                    <a href="#" onclick="showCookies()">Cookies</a>
                 </div>
-                <div class="total-divider"></div>
-                <div class="total-item">
-                    <span class="total-label">Accomplissements</span>
-                    <span id="stat-total-done" class="total-value">0</span>
-                </div>
-                <div class="total-divider"></div>
-                <div class="total-item">
-                    <span class="total-label">Taux de réussite</span>
-                    <span id="stat-success-rate" class="total-value">0%</span>
-                </div>
-                <div class="total-item">
-    <span class="total-label">Taux du jour</span>
-    <span id="stat-today-rate" class="total-value">0%</span>
-</div>
             </div>
         </footer>
-    </div>
 
-    <script src="app.js"></script>
-    <script>
-        // Affichage de la date du jour
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        document.getElementById('current-date').textContent = new Date().toLocaleDateString('fr-FR', options);
+        <!-- ================== MODALS & NOTIFICATIONS ================== -->
+        <div id="notification-container" class="notification-container"></div>
 
-        // Fonction de déconnexion simple
-        function logout() {
-            localStorage.removeItem('token');
-            window.location.href = 'login.html';
-        }
-    </script>
-</body>
+        <div id="help-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-question-circle"></i> Aide & Support</h3>
+                    <button class="modal-close" onclick="closeModal('help-modal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="help-section">
+                        <h4>Comment utiliser TaskFlow</h4>
+                        <p>TaskFlow est conçu pour vous aider à gérer vos tâches quotidiennes et à suivre votre productivité.</p>
+
+                        <div class="help-item">
+                            <h5><i class="fas fa-tasks"></i> Créer des tâches</h5>
+                            <p>Allez dans la page "Gérer" pour créer de nouvelles tâches. Choisissez les jours de la semaine où cette tâche doit apparaître.</p>
+                        </div>
+
+                        <div class="help-item">
+                            <h5><i class="fas fa-list-check"></i> Sous-tâches</h5>
+                            <p>Pour décomposer une tâche complexe, ajoutez des sous-tâches. La tâche principale se marque comme complétée automatiquement quand toutes ses sous-tâches sont faites.</p>
+                        </div>
+
+                        <div class="help-item">
+                            <h5><i class="fas fa-chart-line"></i> Statistiques</h5>
+                            <p>Consultez vos statistiques pour suivre votre progression. La heatmap montre votre activité sur 30 jours.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-action primary" onclick="closeModal('help-modal')">Compris</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================== SCRIPTS ================== -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+        <script src="app.js"></script>
+
+        <script>
+            // Initialisation
+            document.addEventListener('DOMContentLoaded', function() {
+                // Initialiser la date
+                updateCurrentDate();
+
+                // Charger les tâches et statistiques
+                fetchTasks();
+                fetchStats();
+
+                // Charger les citations
+                loadDailyQuote();
+
+                // Initialiser les événements
+                initEventListeners();
+
+                // Vérifier le thème
+                checkTheme();
+            });
+
+            function updateCurrentDate() {
+                const now = new Date();
+                const options = { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                };
+                document.getElementById('current-date').textContent = 
+                    now.toLocaleDateString('fr-FR', options);
+            }
+
+            function toggleUserMenu() {
+                const dropdown = document.getElementById('user-dropdown');
+                dropdown.classList.toggle('show');
+
+                // Fermer en cliquant ailleurs
+                if (dropdown.classList.contains('show')) {
+                    setTimeout(() => {
+                        document.addEventListener('click', closeUserMenuOnClick);
+                    }, 10);
+                }
+            }
+
+            function closeUserMenuOnClick(e) {
+                const dropdown = document.getElementById('user-dropdown');
+                const userMenu = document.querySelector('.user-menu');
+
+                if (!dropdown.contains(e.target) && !userMenu.contains(e.target)) {
+                    dropdown.classList.remove('show');
+                    document.removeEventListener('click', closeUserMenuOnClick);
+                }
+            }
+
+            function showNotification(message, type = 'info', duration = 3000) {
+                const container = document.getElementById('notification-container');
+                const notification = document.createElement('div');
+                notification.className = `notification notification-${type}`;
+                notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                <span>${message}</span>
+                <button class="notification-close" onclick="this.parentElement.remove()">&times;</button>
+            `;
+
+                container.appendChild(notification);
+
+                // Animation
+                setTimeout(() => notification.classList.add('show'), 10);
+
+                // Auto-remove
+                if (duration > 0) {
+                    setTimeout(() => {
+                        notification.classList.remove('show');
+                        setTimeout(() => notification.remove(), 300);
+                    }, duration);
+                }
+
+                return notification;
+            }
+
+            function showHelp() {
+                document.getElementById('help-modal').style.display = 'flex';
+            }
+
+            function closeModal(modalId) {
+                document.getElementById(modalId).style.display = 'none';
+            }
+
+            function showAbout() {
+                alert('TaskFlow v2.1.0\n\nUne application de gestion de tâches moderne avec sous-tâches, statistiques avancées et insights personnalisés.\n\nDéveloppé avec passion pour améliorer votre productivité.');
+            }
+
+            function showPrivacy() {
+                alert('Politique de confidentialité\n\nNous respectons votre vie privée. Vos données sont stockées localement et ne sont pas partagées avec des tiers.');
+            }
+
+            function showFeature(feature) {
+                const features = {
+                    subtasks: 'Les sous-tâches vous permettent de décomposer des tâches complexes en étapes gérables.',
+                    stats: 'Les statistiques détaillées vous aident à suivre votre progression et à identifier vos tendances.',
+                    heatmap: 'La heatmap visuelle montre votre activité quotidienne sur 30 jours.',
+                };
+
+                showNotification(features[feature], 'info');
+            }
+
+            function toggleDarkMode() {
+                document.body.classList.toggle('dark-mode');
+                const isDark = document.body.classList.contains('dark-mode');
+                localStorage.setItem('darkMode', isDark);
+                showNotification(`Mode ${isDark ? 'sombre' : 'clair'} activé`, 'success');
+            }
+
+            function checkTheme() {
+                const darkMode = localStorage.getItem('darkMode');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+                if (darkMode === 'true' || (darkMode === null && prefersDark)) {
+                    document.body.classList.add('dark-mode');
+                }
+            }
+
+            function initEventListeners() {
+                // Fermer les modales en cliquant à l'extérieur
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.addEventListener('click', function(e) {
+                        if (e.target === this) {
+                            this.style.display = 'none';
+                        }
+                    });
+                });
+
+                // Navigation fluide
+                document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                    anchor.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const targetId = this.getAttribute('href');
+                        if (targetId !== '#') {
+                            const targetElement = document.querySelector(targetId);
+                            if (targetElement) {
+                                targetElement.scrollIntoView({ behavior: 'smooth' });
+                            }
+                        }
+                    });
+                });
+
+                // Rafraîchir la date toutes les heures
+                setInterval(updateCurrentDate, 3600000);
+            }
+
+            // Citations inspirantes
+            const quotes = [
+                {
+                    text: "La productivité n'est jamais un accident. C'est toujours le résultat d'un engagement envers l'excellence, une planification intelligente et un effort concentré.",
+                    author: "Paul J. Meyer"
+                },
+                {
+                    text: "Le succès est la somme de petits efforts répétés jour après jour.",
+                    author: "Robert Collier"
+                },
+                {
+                    text: "Ne reportez pas à demain ce que vous pouvez faire aujourd'hui. Demain, vous pourriez être mort.",
+                    author: "Benjamin Franklin"
+                },
+                {
+                    text: "La façon de commencer est d'arrêter de parler et de commencer à faire.",
+                    author: "Walt Disney"
+                },
+                {
+                    text: "La meilleure façon de prédire l'avenir est de le créer.",
+                    author: "Peter Drucker"
+                }
+            ];
+
+            function loadDailyQuote() {
+                const today = new Date().getDate();
+                const quoteIndex = today % quotes.length;
+                const quote = quotes[quoteIndex];
+
+                document.getElementById('daily-quote').textContent = `"${quote.text}"`;
+                document.getElementById('quote-author').textContent = quote.author;
+            }
+
+            function newQuote() {
+                const randomIndex = Math.floor(Math.random() * quotes.length);
+                const quote = quotes[randomIndex];
+
+                document.getElementById('daily-quote').textContent = `"${quote.text}"`;
+                document.getElementById('quote-author').textContent = quote.author;
+
+                showNotification('Nouvelle citation chargée', 'info');
+            }
+
+            function refreshTasks() {
+                showNotification('Actualisation des tâches...', 'info');
+                fetchTasks();
+            }
+
+
+            // Fonctions de filtrage
+            function filterTasks(filter) {
+                // Activer le bouton correspondant
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                event.target.classList.add('active');
+
+                // Filtrer les tâches (implémenter dans app.js)
+                applyTaskFilter(filter);
+            }
+
+            function changePeriod(period) {
+                // Activer le bouton correspondant
+                document.querySelectorAll('.period-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                event.target.classList.add('active');
+
+                // Changer la période des statistiques
+                updateStatsPeriod(period);
+            }
+
+            function changeChartType(type) {
+                // Activer le bouton correspondant
+                document.querySelectorAll('.progress-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                event.target.classList.add('active');
+
+                // Changer le type de graphique
+                updateChartType(type);
+            }
+
+            // Exporter toutes les données
+            async function exportAllData() {
+                try {
+                    const tasks = await apiFetch('/tasks/all');
+                    const stats = await apiFetch('/stats');
+
+                    if (!tasks || !stats) return;
+
+                    const exportData = {
+                        timestamp: new Date().toISOString(),
+                        tasks: tasks,
+                        stats: stats.summary,
+                        history: stats.history
+                    };
+
+                    const dataStr = JSON.stringify(exportData, null, 2);
+                    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+                    const exportName = `taskflow-export-${new Date().toISOString().slice(0,10)}.json`;
+
+                    const link = document.createElement('a');
+                    link.setAttribute('href', dataUri);
+                    link.setAttribute('download', exportName);
+                    link.click();
+
+                    showNotification('Export réussi !', 'success');
+                } catch (error) {
+                    console.error('Export error:', error);
+                    showNotification('Erreur lors de l\'export', 'error');
+                }
+            }
+
+            // Ces fonctions seront implémentées dans app.js
+            function applyTaskFilter(filter) {}
+            function updateStatsPeriod(period) {}
+            function updateChartType(type) {}
+            function showHabitDetails() {}
+            function optimizeHabits() {}
+            function dismissRecommendations() {}
+            function applyRecommendations() {}
+        </script>
+    </body>
 </html>

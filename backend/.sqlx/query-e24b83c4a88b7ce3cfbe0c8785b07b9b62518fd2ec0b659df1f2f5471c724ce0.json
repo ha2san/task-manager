@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "UPDATE tasks SET deleted = true WHERE id = $1",
+  "query": "UPDATE tasks SET has_subtasks = true WHERE id = $1",
   "describe": {
     "columns": [],
     "parameters": {
@@ -10,5 +10,5 @@
     },
     "nullable": []
   },
-  "hash": "16b3f12d027d6cd90043449e08ac3b520c55d64a00d3bc9be95dd6e4e14fa3e5"
+  "hash": "e24b83c4a88b7ce3cfbe0c8785b07b9b62518fd2ec0b659df1f2f5471c724ce0"
 }

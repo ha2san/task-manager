@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE subtasks SET completed = $1 WHERE id = $2 AND task_id = $3",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Bool",
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ebe02dd8a9372f0c50c4414c4b7bdb0f09a73757679fe41d88fe1fa7e3cf10cb"
+}

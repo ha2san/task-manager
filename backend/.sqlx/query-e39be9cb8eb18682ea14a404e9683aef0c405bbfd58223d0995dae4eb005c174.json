@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM subtasks WHERE id = $1 AND task_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e39be9cb8eb18682ea14a404e9683aef0c405bbfd58223d0995dae4eb005c174"
+}

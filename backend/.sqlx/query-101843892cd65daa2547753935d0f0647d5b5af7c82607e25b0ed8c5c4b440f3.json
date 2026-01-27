@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT tc.completed \n                FROM task_completions tc\n                WHERE tc.task_id = $1 AND tc.date = current_date\n                ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "completed",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "101843892cd65daa2547753935d0f0647d5b5af7c82607e25b0ed8c5c4b440f3"
+}

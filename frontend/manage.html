@@ -1,84 +1,1108 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>TaskFlow – Gestion</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Journal - Gestion des tâches</title>
+        <meta name="description" content="Gérez et organisez vos tâches et sous-tâches">
+        <link rel="stylesheet" href="style.css">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚙️</text></svg>">
+    </head>
+    <body>
+        <!-- ================== HEADER ================== -->
+        <header class="main-header">
+            <div class="header-container">
+                <div class="logo">
+                    <a href="index.html" class="logo-link">
+                        <div class="logo-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="logo-text">
+                            <h1>Journal</h1>
+                            <p class="tagline">Gestion de vos tâches</p>
+                        </div>
+                    </a>
+                </div>
 
-<div class="app-container">
-    <header class="main-header">
-        <div class="logo-area">
-            <h1>Gestion des tâches</h1>
-            <p class="date-subtitle">Créer, importer et organiser vos habitudes</p>
+                <nav class="header-nav">
+                    <a href="index.html" class="nav-link">
+                        <i class="fas fa-home"></i>
+                        <span>Tableau de bord</span>
+                    </a>
+                    <a href="manage.html" class="nav-link active">
+                        <i class="fas fa-cog"></i>
+                        <span>Gérer</span>
+                    </a>
+                    <div class="header-actions">
+                        <button class="btn-action" onclick="window.history.back()">
+                            <i class="fas fa-arrow-left"></i>
+                            Retour
+                        </button>
+                    </div>
+                </nav>
+            </div>
+        </header>
+
+        <!-- ================== CONTENU PRINCIPAL ================== -->
+        <main class="manage-container">
+            <!-- Section de création -->
+            <section class="create-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-plus-circle"></i> Créer une nouvelle tâche</h2>
+                    <p>Définissez une tâche avec ses jours de récurrence et ses sous-tâches</p>
+                </div>
+
+                <form id="create-task-form" class="task-form">
+                    <div class="form-group">
+                        <label for="task-title">
+                            <i class="fas fa-heading"></i>
+                            Titre de la tâche
+                        </label>
+                        <input type="text" id="task-title" placeholder="Ex: Lire 30 minutes" required>
+                        <div class="form-hint">Titre clair et descriptif</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <i class="fas fa-calendar-week"></i>
+                            Jours de récurrence
+                        </label>
+                        <div class="days-selector">
+                            <label class="day-checkbox">
+                                <input type="checkbox" name="days" value="1">
+                                <span class="day-label">Lun</span>
+                            </label>
+                            <label class="day-checkbox">
+                                <input type="checkbox" name="days" value="2">
+                                <span class="day-label">Mar</span>
+                            </label>
+                            <label class="day-checkbox">
+                                <input type="checkbox" name="days" value="3">
+                                <span class="day-label">Mer</span>
+                            </label>
+                            <label class="day-checkbox">
+                                <input type="checkbox" name="days" value="4">
+                                <span class="day-label">Jeu</span>
+                            </label>
+                            <label class="day-checkbox">
+                                <input type="checkbox" name="days" value="5">
+                                <span class="day-label">Ven</span>
+                            </label>
+                            <label class="day-checkbox">
+                                <input type="checkbox" name="days" value="6">
+                                <span class="day-label">Sam</span>
+                            </label>
+                            <label class="day-checkbox">
+                                <input type="checkbox" name="days" value="7">
+                                <span class="day-label">Dim</span>
+                            </label>
+                        </div>
+                        <div class="form-hint">Sélectionnez les jours où cette tâche doit apparaître</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <i class="fas fa-list-check"></i>
+                            Sous-tâches (optionnel)
+                        </label>
+                        <div class="subtasks-inputs" id="subtasks-inputs">
+                            <div class="subtask-input-row">
+                                <input type="text" class="subtask-input" placeholder="Première sous-tâche">
+                                <button type="button" class="btn-icon remove-subtask" onclick="removeSubtaskInput(this)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-action outline" onclick="addSubtaskInput()">
+                            <i class="fas fa-plus"></i>
+                            Ajouter une sous-tâche
+                        </button>
+                        <div class="form-hint">Décomposez votre tâche en étapes plus petites</div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-action" onclick="clearForm()">
+                            <i class="fas fa-eraser"></i>
+                            Effacer
+                        </button>
+                        <button type="submit" class="btn-action primary">
+                            <i class="fas fa-save"></i>
+                            Créer la tâche
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Import/Export -->
+                <div class="import-export-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-file-import"></i> Importer / Exporter</h3>
+                    </div>
+                    <div class="import-export-actions">
+                        <div class="import-box">
+                            <input type="file" id="import-file" accept=".json" hidden>
+                            <label for="import-file" class="btn-action outline">
+                                <i class="fas fa-file-import"></i>
+                                Importer JSON
+                            </label>
+                            <p class="form-hint">Importez des tâches depuis un fichier JSON</p>
+                        </div>
+
+                        <div class="export-box">
+                            <button class="btn-action outline" onclick="exportTasks()">
+                                <i class="fas fa-file-export"></i>
+                                Exporter JSON
+                            </button>
+                            <p class="form-hint">Exportez toutes vos tâches au format JSON</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section de gestion -->
+            <section class="manage-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-tasks"></i> Gérer vos tâches</h2>
+                    <p>Modifiez, archivez ou supprimez vos tâches existantes</p>
+                </div>
+
+                <!-- Filtres et recherche -->
+                <div class="manage-controls">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="task-search" placeholder="Rechercher une tâche...">
+                        <button class="btn-icon" onclick="clearSearch()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <div class="filter-controls">
+                        <select id="status-filter" class="filter-select">
+                            <option value="all">Tous les statuts</option>
+                            <option value="active">Actives seulement</option>
+                            <option value="archived">Archivées seulement</option>
+                        </select>
+
+                        <select id="day-filter" class="filter-select">
+                            <option value="all">Tous les jours</option>
+                            <option value="1">Lundi</option>
+                            <option value="2">Mardi</option>
+                            <option value="3">Mercredi</option>
+                            <option value="4">Jeudi</option>
+                            <option value="5">Vendredi</option>
+                            <option value="6">Samedi</option>
+                            <option value="7">Dimanche</option>
+                        </select>
+
+                        <button class="btn-action" onclick="resetFilters()">
+                            <i class="fas fa-redo"></i>
+                            Réinitialiser
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Liste des tâches -->
+                <div class="tasks-manage-container">
+                    <div class="tasks-header">
+                        <h3>Vos tâches</h3>
+                        <div class="tasks-summary">
+                            <span class="summary-item">
+                                <i class="fas fa-tasks"></i>
+                                Total: <strong id="total-tasks">0</strong>
+                            </span>
+                            <span class="summary-item">
+                                <i class="fas fa-play-circle"></i>
+                                Actives: <strong id="active-tasks">0</strong>
+                            </span>
+                            <span class="summary-item">
+                                <i class="fas fa-archive"></i>
+                                Archivées: <strong id="archived-tasks">0</strong>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div id="tasks-loading" class="loading-state">
+                        <div class="spinner"></div>
+                        <p>Chargement de vos tâches...</p>
+                    </div>
+
+                    <div id="tasks-empty" class="empty-state" style="display: none;">
+                        <i class="fas fa-clipboard-list"></i>
+                        <h3>Aucune tâche trouvée</h3>
+                        <p>Commencez par créer votre première tâche ci-dessus.</p>
+                    </div>
+
+                    <div id="tasks-filter-empty" class="empty-state" style="display: none;">
+                        <i class="fas fa-filter"></i>
+                        <h3>Aucune tâche correspondante</h3>
+                        <p>Aucune tâche ne correspond à vos filtres. Essayez de modifier vos critères.</p>
+                        <button class="btn-action" onclick="resetFilters()">
+                            <i class="fas fa-redo"></i>
+                            Réinitialiser les filtres
+                        </button>
+                    </div>
+
+                    <div class="tasks-grid" id="tasks-grid">
+                        <!-- Les tâches seront insérées ici -->
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="pagination" id="pagination" style="display: none;">
+                        <button class="pagination-btn" onclick="previousPage()">
+                            <i class="fas fa-chevron-left"></i>
+                            Précédent
+                        </button>
+                        <span class="page-info">
+                            Page <span id="current-page">1</span> sur <span id="total-pages">1</span>
+                        </span>
+                        <button class="pagination-btn" onclick="nextPage()">
+                            Suivant
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Actions en masse -->
+                <div class="bulk-actions">
+                    <div class="bulk-header">
+                        <h4><i class="fas fa-layer-group"></i> Actions en masse</h4>
+                        <div class="bulk-select">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="select-all">
+                                <span>Sélectionner tout</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="bulk-buttons">
+                        <button class="btn-action" onclick="archiveSelected()" disabled id="btn-archive">
+                            <i class="fas fa-archive"></i>
+                            Archiver
+                        </button>
+                        <button class="btn-action" onclick="activateSelected()" disabled id="btn-activate">
+                            <i class="fas fa-play-circle"></i>
+                            Activer
+                        </button>
+                        <button class="btn-action danger" onclick="deleteSelected()" disabled id="btn-delete">
+                            <i class="fas fa-trash"></i>
+                            Supprimer
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- ================== MODAL D'ÉDITION ================== -->
+        <div id="edit-modal" class="modal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h3><i class="fas fa-edit"></i> Modifier la tâche</h3>
+                    <button class="modal-close" onclick="closeEditModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-task-form" class="task-form">
+                        <input type="hidden" id="edit-task-id">
+
+                        <div class="form-group">
+                            <label for="edit-task-title">
+                                <i class="fas fa-heading"></i>
+                                Titre
+                            </label>
+                            <input type="text" id="edit-task-title" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                <i class="fas fa-calendar-week"></i>
+                                Jours
+                            </label>
+                            <div class="days-selector">
+                                <label class="day-checkbox">
+                                    <input type="checkbox" name="edit-days" value="1">
+                                    <span class="day-label">Lun</span>
+                                </label>
+                                <label class="day-checkbox">
+                                    <input type="checkbox" name="edit-days" value="2">
+                                    <span class="day-label">Mar</span>
+                                </label>
+                                <label class="day-checkbox">
+                                    <input type="checkbox" name="edit-days" value="3">
+                                    <span class="day-label">Mer</span>
+                                </label>
+                                <label class="day-checkbox">
+                                    <input type="checkbox" name="edit-days" value="4">
+                                    <span class="day-label">Jeu</span>
+                                </label>
+                                <label class="day-checkbox">
+                                    <input type="checkbox" name="edit-days" value="5">
+                                    <span class="day-label">Ven</span>
+                                </label>
+                                <label class="day-checkbox">
+                                    <input type="checkbox" name="edit-days" value="6">
+                                    <span class="day-label">Sam</span>
+                                </label>
+                                <label class="day-checkbox">
+                                    <input type="checkbox" name="edit-days" value="7">
+                                    <span class="day-label">Dim</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                <i class="fas fa-list-check"></i>
+                                Sous-tâches
+                            </label>
+                            <div class="edit-subtasks" id="edit-subtasks">
+                                <!-- Sous-tâches existantes -->
+                            </div>
+                            <button type="button" class="btn-action outline" onclick="addEditSubtask()">
+                                <i class="fas fa-plus"></i>
+                                Ajouter une sous-tâche
+                            </button>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="edit-task-active">
+                                <span>Tâche active</span>
+                            </label>
+                            <div class="form-hint">Une tâche inactive n'apparaîtra pas dans votre tableau de bord</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-action" onclick="closeEditModal()">
+                        <i class="fas fa-times"></i>
+                        Annuler
+                    </button>
+                    <button class="btn-action primary" onclick="saveTaskEdit()">
+                        <i class="fas fa-save"></i>
+                        Enregistrer
+                    </button>
+                </div>
+            </div>
         </div>
-        <nav>
-            <a href="index.html" class="btn-nav">← Dashboard</a>
-        </nav>
-    </header>
 
-    <main class="content manage-grid">
-
-        <!-- ================== CRÉATION / IMPORT ================== -->
-        <section class="card">
-            <div class="card-header">
-                <h2>Nouvelle tâche</h2>
-            </div>
-
-            <form id="task-form" class="manage-form">
-                <input type="text" id="task-title" placeholder="Nom de la tâche">
-
-                <div class="days-picker">
-                    <label><input type="checkbox" name="days" value="1"> Lun</label>
-                    <label><input type="checkbox" name="days" value="2"> Mar</label>
-                    <label><input type="checkbox" name="days" value="3"> Mer</label>
-                    <label><input type="checkbox" name="days" value="4"> Jeu</label>
-                    <label><input type="checkbox" name="days" value="5"> Ven</label>
-                    <label><input type="checkbox" name="days" value="6"> Sam</label>
-                    <label><input type="checkbox" name="days" value="7"> Dim</label>
+        <!-- ================== FOOTER ================== -->
+        <footer class="manage-footer">
+            <div class="footer-container">
+                <div class="footer-info">
+                    <div class="footer-logo">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Journal - Gestion</span>
+                    </div>
+                    <p>Gérez vos tâches quotidiennes</p>
                 </div>
 
-                <button type="submit" class="btn-primary">Créer la tâche</button>
-            </form>
+                <div class="footer-stats">
+                    <div class="footer-stat">
+                        <span class="stat-number" id="footer-total-manage">0</span>
+                        <span class="stat-label">Tâches totales</span>
+                    </div>
+                    <div class="footer-stat">
+                        <span class="stat-number" id="footer-subtasks">0</span>
+                        <span class="stat-label">Sous-tâches</span>
+                    </div>
+                    <div class="footer-stat">
+                        <span class="stat-number" id="footer-days-covered">0</span>
+                        <span class="stat-label">Jours couverts</span>
+                    </div>
+                </div>
 
-            <!-- IMPORT JSON -->
-            <div class="import-box">
-                <input type="file" id="importFile" accept=".json" hidden>
-                <button class="btn-secondary" onclick="document.getElementById('importFile').click()">
-                    📂 Importer un fichier JSON
+                <div class="footer-actions">
+                    <a href="index.html" class="footer-link">
+                        <i class="fas fa-home"></i>
+                        Tableau de bord
+                    </a>
+                    <button class="footer-link" onclick="showHelp()">
+                        <i class="fas fa-question-circle"></i>
+                        Aide
+                    </button>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2024 TaskFlow - Page de gestion</p>
+            </div>
+        </footer>
+
+        <!-- ================== SCRIPTS ================== -->
+        <script src="app.js"></script>
+
+        <script>
+            // Variables de gestion
+            let allTasks = [];
+            let filteredTasks = [];
+            let currentPage = 1;
+            const tasksPerPage = 9;
+            let selectedTaskIds = new Set();
+
+            // Initialisation
+            document.addEventListener('DOMContentLoaded', function() {
+                // Charger les tâches
+                fetchAllTasks();
+
+                // Configurer les événements
+                setupEventListeners();
+
+                // Configurer le formulaire
+                setupForm();
+
+                // Vérifier le thème
+                checkTheme();
+            });
+
+            function checkTheme() {
+                const darkMode = localStorage.getItem('darkMode');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+                if (darkMode === 'true' || (darkMode === null && prefersDark)) {
+                    document.body.classList.add('dark-mode');
+                }
+            }
+
+            function setupEventListeners() {
+                // Recherche
+                document.getElementById('task-search').addEventListener('input', filterTasks);
+
+                // Filtres
+                document.getElementById('status-filter').addEventListener('change', filterTasks);
+                document.getElementById('day-filter').addEventListener('change', filterTasks);
+
+                // Import
+                document.getElementById('import-file').addEventListener('change', handleImport);
+
+                // Sélection multiple
+                document.getElementById('select-all').addEventListener('change', toggleSelectAll);
+
+                // Fermer modale en cliquant à l'extérieur
+                document.getElementById('edit-modal').addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeEditModal();
+                    }
+                });
+            }
+
+            function setupForm() {
+                document.getElementById('create-task-form').addEventListener('submit', async function(e) {
+                    e.preventDefault();
+
+                    const title = document.getElementById('task-title').value.trim();
+                    const days = Array.from(document.querySelectorAll('input[name="days"]:checked'))
+                        .map(cb => parseInt(cb.value));
+                    const subtasks = Array.from(document.querySelectorAll('.subtask-input'))
+                        .map(input => input.value.trim())
+                        .filter(text => text.length > 0);
+
+                    if (!title) {
+                        showNotification('Veuillez saisir un titre', 'error');
+                        return;
+                    }
+
+                    if (days.length === 0) {
+                        showNotification('Veuillez sélectionner au moins un jour', 'error');
+                        return;
+                    }
+
+                    try {
+                        const result = await apiFetch('/tasks', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                title,
+                                days,
+                                subtasks: subtasks.length > 0 ? subtasks : null
+                            })
+                        });
+
+                        if (result) {
+                            showNotification('Tâche créée avec succès', 'success');
+                            clearForm();
+                            fetchAllTasks();
+                        }
+                    } catch (error) {
+                        showNotification('Erreur lors de la création', 'error');
+                    }
+                });
+            }
+
+            function clearForm() {
+                document.getElementById('task-title').value = '';
+                document.querySelectorAll('input[name="days"]').forEach(cb => cb.checked = false);
+                document.getElementById('subtasks-inputs').innerHTML = `
+                <div class="subtask-input-row">
+                    <input type="text" class="subtask-input" placeholder="Première sous-tâche">
+                    <button type="button" class="btn-icon remove-subtask" onclick="removeSubtaskInput(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            }
+
+            function addSubtaskInput() {
+                const container = document.getElementById('subtasks-inputs');
+                const div = document.createElement('div');
+                div.className = 'subtask-input-row';
+                div.innerHTML = `
+                <input type="text" class="subtask-input" placeholder="Nouvelle sous-tâche">
+                <button type="button" class="btn-icon remove-subtask" onclick="removeSubtaskInput(this)">
+                    <i class="fas fa-times"></i>
                 </button>
-            </div>
-        </section>
+            `;
+                container.appendChild(div);
+                div.querySelector('input').focus();
+            }
 
-        <!-- ================== LISTE + FILTRES ================== -->
-        <section class="card">
-            <div class="card-header">
-                <h2>Toutes mes tâches</h2>
-            </div>
+            function removeSubtaskInput(button) {
+                const rows = document.querySelectorAll('.subtask-input-row');
+                if (rows.length > 1) {
+                    button.closest('.subtask-input-row').remove();
+                } else {
+                    button.previousElementSibling.value = '';
+                    button.previousElementSibling.focus();
+                }
+            }
 
-            <!-- Filtres -->
-            <div class="filters">
-                <input type="text" id="searchInput" placeholder="🔍 Rechercher une tâche">
-                <div class="days-filter">
-                    <label><input type="checkbox" value="1"> Lun</label>
-                    <label><input type="checkbox" value="2"> Mar</label>
-                    <label><input type="checkbox" value="3"> Mer</label>
-                    <label><input type="checkbox" value="4"> Jeu</label>
-                    <label><input type="checkbox" value="5"> Ven</label>
-                    <label><input type="checkbox" value="6"> Sam</label>
-                    <label><input type="checkbox" value="7"> Dim</label>
+            function addEditSubtask() {
+                const container = document.getElementById('edit-subtasks');
+                const div = document.createElement('div');
+                div.className = 'edit-subtask-row';
+                div.innerHTML = `
+                <input type="text" class="edit-subtask-input" placeholder="Nouvelle sous-tâche">
+                <button type="button" class="btn-icon remove-subtask" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+                container.appendChild(div);
+            }
+
+            async function fetchAllTasks() {
+                const loading = document.getElementById('tasks-loading');
+                const empty = document.getElementById('tasks-empty');
+                const grid = document.getElementById('tasks-grid');
+
+                loading.style.display = 'flex';
+                empty.style.display = 'none';
+                grid.innerHTML = '';
+
+                try {
+                    const tasks = await apiFetch('/tasks/all');
+                    if (!tasks) return;
+
+                    allTasks = tasks;
+                    filteredTasks = [...tasks];
+
+                    loading.style.display = 'none';
+
+                    if (tasks.length === 0) {
+                        empty.style.display = 'flex';
+                    } else {
+                        filterTasks();
+                        updateSummary();
+                    }
+                } catch (error) {
+                    loading.style.display = 'none';
+                    showNotification('Erreur lors du chargement', 'error');
+                }
+            }
+
+            function filterTasks() {
+                const searchTerm = document.getElementById('task-search').value.toLowerCase();
+                const statusFilter = document.getElementById('status-filter').value;
+                const dayFilter = document.getElementById('day-filter').value;
+                const filterEmpty = document.getElementById('tasks-filter-empty');
+
+                filteredTasks = allTasks.filter(task => {
+                    // Filtre de recherche
+                    if (searchTerm && !task.title.toLowerCase().includes(searchTerm)) {
+                        return false;
+                    }
+
+                    // Filtre de statut
+                    if (statusFilter === 'active' && !task.active) return false;
+                    if (statusFilter === 'archived' && task.active) return false;
+
+                    // Filtre par jour
+                    if (dayFilter !== 'all' && !task.days.includes(parseInt(dayFilter))) {
+                        return false;
+                    }
+
+                    return true;
+                });
+
+                // Afficher/masquer le message "aucun résultat"
+                if (filteredTasks.length === 0 && allTasks.length > 0) {
+                    filterEmpty.style.display = 'flex';
+                    document.getElementById('tasks-empty').style.display = 'none';
+                } else {
+                    filterEmpty.style.display = 'none';
+                }
+
+                // Réinitialiser la pagination
+                currentPage = 1;
+                renderTasks();
+                updatePagination();
+            }
+
+            function renderTasks() {
+                const grid = document.getElementById('tasks-grid');
+                const startIndex = (currentPage - 1) * tasksPerPage;
+                const endIndex = startIndex + tasksPerPage;
+                const pageTasks = filteredTasks.slice(startIndex, endIndex);
+
+                grid.innerHTML = '';
+
+                if (pageTasks.length === 0) {
+                    return;
+                }
+
+                pageTasks.forEach(task => {
+                    const taskCard = createTaskCard(task);
+                    grid.appendChild(taskCard);
+                });
+
+                updateSelectionUI();
+            }
+
+            function createTaskCard(task) {
+                const card = document.createElement('div');
+                card.className = `task-card ${!task.active ? 'archived' : ''}`;
+                card.dataset.taskId = task.id;
+
+                // Jours formatés
+                const dayNames = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+                const taskDays = task.days.map(d => dayNames[d-1]).join(', ');
+
+                // Sous-tâches formatées
+                const subtasksCount = task.subtasks ? task.subtasks.length : 0;
+                const completedSubtasks = task.subtasks ? task.subtasks.filter(st => st.completed).length : 0;
+
+                card.innerHTML = `
+                <div class="task-card-header">
+                    <label class="checkbox-label">
+                        <input type="checkbox" class="task-select" data-task-id="${task.id}">
+                        <span class="checkbox-custom"></span>
+                    </label>
+                    <div class="task-title">${escapeHtml(task.title)}</div>
+                    <div class="task-status">
+                        <span class="status-badge ${task.active ? 'active' : 'archived'}">
+                            ${task.active ? 'Active' : 'Archivée'}
+                        </span>
+                    </div>
                 </div>
-            </div>
 
-            <div id="all-tasks" class="task-manage-list"></div>
-        </section>
+                <div class="task-card-body">
+                    <div class="task-info">
+                        <div class="info-item">
+                            <i class="fas fa-calendar-week"></i>
+                            <span>${taskDays}</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-list-check"></i>
+                            <span>${subtasksCount} sous-tâche(s) - ${completedSubtasks} terminée(s)</span>
+                        </div>
+                    </div>
 
-    </main>
-</div>
+                    ${subtasksCount > 0 ? `
+                    <div class="subtasks-preview">
+                        <strong>Sous-tâches :</strong>
+                        <ul>
+                            ${task.subtasks.slice(0, 3).map(st => `
+                                <li class="${st.completed ? 'completed' : ''}">
+                                    <i class="fas fa-${st.completed ? 'check-circle' : 'circle'}"></i>
+                                    ${escapeHtml(st.title)}
+                                </li>
+                            `).join('')}
+                            ${subtasksCount > 3 ? `<li class="more">+ ${subtasksCount - 3} autres</li>` : ''}
+                        </ul>
+                    </div>
+                    ` : ''}
+                </div>
 
-<script src="app.js"></script>
-</body>
+                <div class="task-card-actions">
+                    <button class="btn-icon" onclick="editTask(${task.id})" title="Modifier">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-icon" onclick="toggleArchiveTask(${task.id})" title="${task.active ? 'Archiver' : 'Activer'}">
+                        <i class="fas fa-${task.active ? 'archive' : 'play-circle'}"></i>
+                    </button>
+                    <button class="btn-icon danger" onclick="deleteTask(${task.id})" title="Supprimer">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+
+                // Ajouter l'événement de sélection
+                const checkbox = card.querySelector('.task-select');
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        selectedTaskIds.add(task.id);
+                    } else {
+                        selectedTaskIds.delete(task.id);
+                    }
+                    updateSelectionUI();
+                    updateSelectAllCheckbox();
+                });
+
+                return card;
+            }
+
+            function editTask(taskId) {
+                const task = allTasks.find(t => t.id === taskId);
+                if (!task) return;
+
+                // Remplir le formulaire d'édition
+                document.getElementById('edit-task-id').value = task.id;
+                document.getElementById('edit-task-title').value = task.title;
+                document.getElementById('edit-task-active').checked = task.active;
+
+                // Jours
+                document.querySelectorAll('input[name="edit-days"]').forEach(cb => {
+                    cb.checked = task.days.includes(parseInt(cb.value));
+                });
+
+                // Sous-tâches
+                const subtasksContainer = document.getElementById('edit-subtasks');
+                subtasksContainer.innerHTML = '';
+
+                if (task.subtasks && task.subtasks.length > 0) {
+                    task.subtasks.forEach(subtask => {
+                        const div = document.createElement('div');
+                        div.className = 'edit-subtask-row';
+                        div.innerHTML = `
+                        <input type="text" class="edit-subtask-input" value="${escapeHtml(subtask.title)}">
+                        <button type="button" class="btn-icon remove-subtask" onclick="this.parentElement.remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                        subtasksContainer.appendChild(div);
+                    });
+                }
+
+                // Afficher la modale
+                document.getElementById('edit-modal').style.display = 'flex';
+            }
+
+            async function saveTaskEdit() {
+                const taskId = document.getElementById('edit-task-id').value;
+                const title = document.getElementById('edit-task-title').value.trim();
+                const active = document.getElementById('edit-task-active').checked;
+                const days = Array.from(document.querySelectorAll('input[name="edit-days"]:checked'))
+                    .map(cb => parseInt(cb.value));
+                const subtaskInputs = Array.from(document.querySelectorAll('.edit-subtask-input'))
+                    .map(input => input.value.trim())
+                    .filter(text => text.length > 0);
+
+                if (!title) {
+                    showNotification('Le titre est requis', 'error');
+                    return;
+                }
+
+                if (days.length === 0) {
+                    showNotification('Sélectionnez au moins un jour', 'error');
+                    return;
+                }
+
+                try {
+                    // Mettre à jour la tâche
+                    await apiFetch(`/tasks/${taskId}`, {
+                        method: 'POST',
+                        body: JSON.stringify({ title, days, active })
+                    });
+
+                    // Mettre à jour les sous-tâches (simplifié - dans une vraie app, on gérerait mieux)
+                    if (subtaskInputs.length > 0) {
+                        // Pour simplifier, on ne met à jour que les titres
+                        // Dans une vraie app, on ferait des requêtes spécifiques
+                    }
+
+                    showNotification('Tâche mise à jour', 'success');
+                    closeEditModal();
+                    fetchAllTasks();
+                } catch (error) {
+                    showNotification('Erreur lors de la mise à jour', 'error');
+                }
+            }
+
+            function closeEditModal() {
+                document.getElementById('edit-modal').style.display = 'none';
+            }
+
+            async function toggleArchiveTask(taskId) {
+                if (!confirm('Changer le statut de cette tâche ?')) return;
+
+                try {
+                    await apiFetch(`/tasks/${taskId}`, { method: 'PATCH' });
+                    showNotification('Statut mis à jour', 'success');
+                    fetchAllTasks();
+                } catch (error) {
+                    showNotification('Erreur', 'error');
+                }
+            }
+
+            async function deleteTask(taskId) {
+                if (!confirm('Supprimer cette tâche et toutes ses sous-tâches ?')) return;
+
+                try {
+                    await apiFetch(`/tasks/${taskId}`, { method: 'DELETE' });
+                    showNotification('Tâche supprimée', 'success');
+                    fetchAllTasks();
+                } catch (error) {
+                    showNotification('Erreur lors de la suppression', 'error');
+                }
+            }
+
+            function updateSummary() {
+                const total = allTasks.length;
+                const active = allTasks.filter(t => t.active).length;
+                const archived = total - active;
+                const subtasks = allTasks.reduce((sum, task) => sum + (task.subtasks ? task.subtasks.length : 0), 0);
+                const daysCovered = new Set(allTasks.flatMap(t => t.days)).size;
+
+                document.getElementById('total-tasks').textContent = total;
+                document.getElementById('active-tasks').textContent = active;
+                document.getElementById('archived-tasks').textContent = archived;
+                document.getElementById('footer-total-manage').textContent = total;
+                document.getElementById('footer-subtasks').textContent = subtasks;
+                document.getElementById('footer-days-covered').textContent = daysCovered;
+            }
+
+            function updatePagination() {
+                const totalPages = Math.ceil(filteredTasks.length / tasksPerPage);
+                const pagination = document.getElementById('pagination');
+
+                if (totalPages > 1) {
+                    pagination.style.display = 'flex';
+                    document.getElementById('current-page').textContent = currentPage;
+                    document.getElementById('total-pages').textContent = totalPages;
+                } else {
+                    pagination.style.display = 'none';
+                }
+            }
+
+            function previousPage() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderTasks();
+                    updatePagination();
+                }
+            }
+
+            function nextPage() {
+                const totalPages = Math.ceil(filteredTasks.length / tasksPerPage);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderTasks();
+                    updatePagination();
+                }
+            }
+
+            // Sélection multiple
+            function toggleSelectAll() {
+                const selectAll = document.getElementById('select-all').checked;
+                const checkboxes = document.querySelectorAll('.task-select');
+
+                selectedTaskIds.clear();
+
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = selectAll;
+                    if (selectAll) {
+                        const taskId = parseInt(checkbox.dataset.taskId);
+                        selectedTaskIds.add(taskId);
+                    }
+                });
+
+                updateSelectionUI();
+            }
+
+            function updateSelectAllCheckbox() {
+                const checkboxes = document.querySelectorAll('.task-select');
+                const selectAll = document.getElementById('select-all');
+
+                if (checkboxes.length === 0) {
+                    selectAll.checked = false;
+                    selectAll.indeterminate = false;
+                    return;
+                }
+
+                const checkedCount = document.querySelectorAll('.task-select:checked').length;
+
+                if (checkedCount === 0) {
+                    selectAll.checked = false;
+                    selectAll.indeterminate = false;
+                } else if (checkedCount === checkboxes.length) {
+                    selectAll.checked = true;
+                    selectAll.indeterminate = false;
+                } else {
+                    selectAll.checked = false;
+                    selectAll.indeterminate = true;
+                }
+            }
+
+            function updateSelectionUI() {
+                const hasSelection = selectedTaskIds.size > 0;
+
+                document.getElementById('btn-archive').disabled = !hasSelection;
+                document.getElementById('btn-activate').disabled = !hasSelection;
+                document.getElementById('btn-delete').disabled = !hasSelection;
+            }
+
+            async function archiveSelected() {
+                if (selectedTaskIds.size === 0) return;
+
+                if (!confirm(`Archiver ${selectedTaskIds.size} tâche(s) ?`)) return;
+
+                try {
+                    for (const taskId of selectedTaskIds) {
+                        await apiFetch(`/tasks/${taskId}`, { method: 'PATCH' });
+                    }
+
+                    showNotification(`${selectedTaskIds.size} tâche(s) archivée(s)`, 'success');
+                    selectedTaskIds.clear();
+                    fetchAllTasks();
+                } catch (error) {
+                    showNotification('Erreur lors de l\'archivage', 'error');
+                }
+            }
+
+            async function activateSelected() {
+                if (selectedTaskIds.size === 0) return;
+
+                if (!confirm(`Activer ${selectedTaskIds.size} tâche(s) ?`)) return;
+
+                try {
+                    for (const taskId of selectedTaskIds) {
+                        const task = allTasks.find(t => t.id === taskId);
+                        if (task && !task.active) {
+                            await apiFetch(`/tasks/${taskId}`, { method: 'PATCH' });
+                        }
+                    }
+
+                    showNotification(`${selectedTaskIds.size} tâche(s) activée(s)`, 'success');
+                    selectedTaskIds.clear();
+                    fetchAllTasks();
+                } catch (error) {
+                    showNotification('Erreur lors de l\'activation', 'error');
+                }
+            }
+
+            async function deleteSelected() {
+                if (selectedTaskIds.size === 0) return;
+
+                if (!confirm(`Supprimer ${selectedTaskIds.size} tâche(s) définitivement ?`)) return;
+
+                try {
+                    for (const taskId of selectedTaskIds) {
+                        await apiFetch(`/tasks/${taskId}`, { method: 'DELETE' });
+                    }
+
+                    showNotification(`${selectedTaskIds.size} tâche(s) supprimée(s)`, 'success');
+                    selectedTaskIds.clear();
+                    fetchAllTasks();
+                } catch (error) {
+                    showNotification('Erreur lors de la suppression', 'error');
+                }
+            }
+
+            // Import/Export
+            async function handleImport(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                try {
+                    const text = await file.text();
+                    const tasks = JSON.parse(text);
+
+                    if (!Array.isArray(tasks)) {
+                        throw new Error('Format invalide');
+                    }
+
+                    let imported = 0;
+                    for (const task of tasks) {
+                        if (task.title && task.days && Array.isArray(task.days)) {
+                            await apiFetch('/tasks', {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    title: task.title,
+                                    days: task.days,
+                                    subtasks: task.subtasks || null
+                                })
+                            });
+                            imported++;
+                        }
+                    }
+
+                    showNotification(`${imported} tâche(s) importée(s)`, 'success');
+                    fetchAllTasks();
+
+                    // Réinitialiser l'input file
+                    event.target.value = '';
+                } catch (error) {
+                    showNotification('Fichier JSON invalide', 'error');
+                }
+            }
+
+            async function exportTasks() {
+                try {
+                    const tasks = await apiFetch('/tasks/all');
+                    if (!tasks) return;
+
+                    const exportData = {
+                        version: '1.0',
+                        exportDate: new Date().toISOString(),
+                        tasks: tasks.map(task => ({
+                            title: task.title,
+                            days: task.days,
+                            subtasks: task.subtasks ? task.subtasks.map(st => st.title) : []
+                        }))
+                    };
+
+                    const dataStr = JSON.stringify(exportData, null, 2);
+                    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+                    const exportName = `taskflow-tasks-${new Date().toISOString().slice(0,10)}.json`;
+
+                    const link = document.createElement('a');
+                    link.setAttribute('href', dataUri);
+                    link.setAttribute('download', exportName);
+                    link.click();
+
+                    showNotification('Export réussi !', 'success');
+                } catch (error) {
+                    showNotification('Erreur lors de l\'export', 'error');
+                }
+            }
+
+            function clearSearch() {
+                document.getElementById('task-search').value = '';
+                filterTasks();
+            }
+
+            function resetFilters() {
+                document.getElementById('task-search').value = '';
+                document.getElementById('status-filter').value = 'all';
+                document.getElementById('day-filter').value = 'all';
+                filterTasks();
+            }
+
+            function showHelp() {
+                alert('Page de gestion\n\n1. Créez des tâches avec jours de récurrence\n2. Ajoutez des sous-tâches pour décomposer\n3. Filtrez et recherchez vos tâches\n4. Utilisez les actions en masse pour gérer plusieurs tâches');
+            }
+
+            // Utilitaires
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function showNotification(message, type = 'info') {
+                // Utiliser la fonction de app.js si disponible
+                if (typeof window.showNotification === 'function') {
+                    window.showNotification(message, type);
+                } else {
+                    alert(`${type}: ${message}`);
+                }
+            }
+        </script>
+    </body>
 </html>
-

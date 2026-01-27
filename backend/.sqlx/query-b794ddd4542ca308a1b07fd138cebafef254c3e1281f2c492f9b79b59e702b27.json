@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT t.id, t.title, t.active, array_agg(td.day_of_week) as \"days!\"\n        FROM tasks t\n        LEFT JOIN task_days td ON t.id = td.task_id\n        WHERE t.user_id = $1 AND t.deleted = false\n        GROUP BY t.id\n        ",
+  "query": "\n        SELECT t.id, t.title, t.active, t.has_subtasks,\n               array_agg(DISTINCT td.day_of_week) as \"days!\"\n        FROM tasks t\n        LEFT JOIN task_days td ON t.id = td.task_id\n        WHERE t.user_id = $1 AND t.deleted = false\n        GROUP BY t.id\n        ORDER BY t.id\n        ",
   "describe": {
     "columns": [
       {
@@ -20,6 +20,11 @@
       },
       {
         "ordinal": 3,
+        "name": "has_subtasks",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 4,
         "name": "days!",
         "type_info": "Int4Array"
       }
@@ -33,8 +38,9 @@
       false,
       false,
       false,
+      false,
       null
     ]
   },
-  "hash": "c0072cbb52889a1dbd095b62c842311a23e9ad6d5aff56825fc34818b6a31db7"
+  "hash": "b794ddd4542ca308a1b07fd138cebafef254c3e1281f2c492f9b79b59e702b27"
 }

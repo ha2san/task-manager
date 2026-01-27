@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        -- Tâches principales prévues aujourd'hui\n        WITH scheduled_tasks AS (\n            SELECT t.id\n            FROM tasks t\n            JOIN task_days td ON t.id = td.task_id\n            WHERE t.user_id = $1 AND t.deleted = false AND t.active = true\n                AND td.day_of_week = extract(isodow from current_date)\n        ),\n        -- Sous-tâches non complétées des tâches prévues\n        scheduled_subtasks AS (\n            SELECT s.id\n            FROM scheduled_tasks st\n            JOIN subtasks s ON s.task_id = st.id AND s.completed = false\n        ),\n        -- Tâches complétées aujourd'hui\n        completed_tasks AS (\n            SELECT tc.task_id\n            FROM task_completions tc\n            JOIN scheduled_tasks st ON st.id = tc.task_id\n            WHERE tc.date = current_date AND tc.completed = true\n        ),\n        -- Sous-tâches complétées aujourd'hui\n        completed_subtasks AS (\n            SELECT s.id\n            FROM scheduled_tasks st\n            JOIN subtasks s ON s.task_id = st.id AND s.completed = true\n        )\n        SELECT \n            (SELECT COUNT(*) FROM scheduled_tasks) as scheduled_tasks,\n            (SELECT COUNT(*) FROM scheduled_subtasks) as scheduled_subtasks,\n            (SELECT COUNT(*) FROM completed_tasks) as completed_tasks,\n            (SELECT COUNT(*) FROM completed_subtasks) as completed_subtasks\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "scheduled_tasks",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "scheduled_subtasks",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "completed_tasks",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "completed_subtasks",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "9e77eda019a1137075217ccd0624b4b906f44508ae14aa1d7e65bd97ac9eb09e"
+}
