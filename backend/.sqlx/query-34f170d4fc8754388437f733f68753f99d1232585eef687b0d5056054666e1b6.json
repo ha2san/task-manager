@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT t.id, t.title, t.active, \n            COALESCE(tc.completed, false) as \"completed!\",\n            COALESCE(tc.priority, 0) as \"priority!\",\n            EXISTS(SELECT 1 FROM subtasks s WHERE s.task_id = t.id) as \"has_subtasks!\"\n        FROM tasks t\n        JOIN task_days td ON t.id = td.task_id\n        LEFT JOIN task_completions tc ON t.id = tc.task_id AND tc.date = current_date\n        WHERE t.user_id = $1 \n          AND td.day_of_week = extract(isodow from current_date)\n          AND t.active = true AND t.deleted = false\n        ORDER BY tc.priority ASC\n        ",
+  "query": "\n        SELECT t.id, t.title, t.active, \n               COALESCE(tc.completed, false) as \"completed!\",\n               COALESCE(tc.priority, 0) as \"priority!\",\n               EXISTS(SELECT 1 FROM subtasks s WHERE s.task_id = t.id) as \"has_subtasks!\"\n        FROM tasks t\n        JOIN task_days td ON t.id = td.task_id\n        LEFT JOIN task_completions tc ON t.id = tc.task_id AND tc.date = current_date\n        WHERE t.user_id = $1 \n          AND td.day_of_week = extract(isodow from current_date)\n          AND t.active = true \n          AND t.deleted = false\n        ORDER BY tc.priority ASC, t.id ASC\n        ",
   "describe": {
     "columns": [
       {
@@ -48,5 +48,5 @@
       null
     ]
   },
-  "hash": "20fb5e23124fc7830f31b0576a7fe961d99e17c182d1a9a3db9d7558d4339f36"
+  "hash": "34f170d4fc8754388437f733f68753f99d1232585eef687b0d5056054666e1b6"
 }

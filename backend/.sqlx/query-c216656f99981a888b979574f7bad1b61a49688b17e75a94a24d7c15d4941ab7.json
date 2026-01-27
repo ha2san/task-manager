@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT id, title, completed, priority\n            FROM subtasks\n            WHERE task_id = $1\n            ORDER BY priority ASC\n            ",
+  "query": "\n                SELECT id, title, completed, priority\n                FROM subtasks\n                WHERE task_id = $1\n                ORDER BY priority ASC, id ASC\n                ",
   "describe": {
     "columns": [
       {
@@ -36,5 +36,5 @@
       false
     ]
   },
-  "hash": "353e8292787c881174f59d0ac7dc25952e03ba149030c388da4f563ffe33f338"
+  "hash": "c216656f99981a888b979574f7bad1b61a49688b17e75a94a24d7c15d4941ab7"
 }

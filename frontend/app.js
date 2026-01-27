@@ -117,7 +117,29 @@ function renderTasks(tasks) {
     const list = document.getElementById('tasks-list');
     if (!list) return;
     
-    list.innerHTML = tasks.map(task => `
+    list.innerHTML = tasks.map(task => {
+        // Toujours afficher le conteneur de sous-tâches si has_subtasks est vrai
+        // même si subtasks est vide (au cas où)
+        const shouldShowSubtasks = task.has_subtasks;
+        const subtasksHtml = shouldShowSubtasks && task.subtasks && task.subtasks.length > 0 ? 
+            task.subtasks.map(subtask => `
+                <div class="subtask-item ${subtask.completed ? 'completed' : ''}" 
+                     data-id="${task.id}" data-subtask-id="${subtask.id}">
+                    <div class="subtask-checkbox">
+                        <input type="checkbox" 
+                               id="subtask-${subtask.id}" 
+                               ${subtask.completed ? 'checked' : ''}
+                               onchange="toggleSubtask(${task.id}, ${subtask.id})">
+                        <label for="subtask-${subtask.id}" class="checkbox-custom small"></label>
+                    </div>
+                    <span class="subtask-title" onclick="toggleSubtask(${task.id}, ${subtask.id})">
+                        ${escapeHtml(subtask.title)}
+                    </span>
+                    <div class="subtask-priority">#${subtask.priority + 1}</div>
+                </div>
+            `).join('') : '';
+        
+        return `
         <li class="task-item ${task.completed ? 'completed' : ''} ${task.has_subtasks ? 'has-subtasks' : ''}" 
             data-id="${task.id}" data-priority="${task.priority || 0}">
             <div class="task-main">
@@ -146,24 +168,11 @@ function renderTasks(tasks) {
                     </div>
                 </div>
                 
-                ${task.has_subtasks && task.subtasks && task.subtasks.length > 0 ? `
-                <div class="subtasks-container">
-                    ${task.subtasks.map(subtask => `
-                        <div class="subtask-item ${subtask.completed ? 'completed' : ''}" 
-                             data-id="${task.id}" data-subtask-id="${subtask.id}">
-                            <div class="subtask-checkbox">
-                                <input type="checkbox" 
-                                       id="subtask-${subtask.id}" 
-                                       ${subtask.completed ? 'checked' : ''}
-                                       onchange="toggleSubtask(${task.id}, ${subtask.id})">
-                                <label for="subtask-${subtask.id}" class="checkbox-custom small"></label>
-                            </div>
-                            <span class="subtask-title" onclick="toggleSubtask(${task.id}, ${subtask.id})">
-                                ${escapeHtml(subtask.title)}
-                            </span>
-                            <div class="subtask-priority">#${subtask.priority + 1}</div>
-                        </div>
-                    `).join('')}
+                ${shouldShowSubtasks ? `
+                <div class="subtasks-container" id="subtasks-${task.id}">
+                    ${subtasksHtml}
+                    ${(!task.subtasks || task.subtasks.length === 0) ? 
+                        '<div class="no-subtasks-message">Aucune sous-tâche pour le moment</div>' : ''}
                 </div>
                 ` : ''}
                 
@@ -179,7 +188,18 @@ function renderTasks(tasks) {
                 </div>
             </div>
         </li>
-    `).join('');
+        `;
+    }).join('');
+    
+    // Ajouter un gestionnaire d'événements pour les nouveaux champs de sous-tâches
+    document.querySelectorAll('.subtask-input').forEach(input => {
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const taskId = this.dataset.taskId;
+                addSubtask(parseInt(taskId), this);
+            }
+        });
+    });
 }
 
 function updateTaskCounters(tasks = []) {
@@ -283,22 +303,31 @@ async function toggleSubtask(taskId, subtaskId) {
     }
 }
 
+
 async function addSubtask(taskId, inputElement) {
     const title = inputElement.value.trim();
     if (!title) return;
     
     try {
-        const success = await apiFetch(`/tasks/${taskId}/subtasks`, {
+        const result = await apiFetch(`/tasks/${taskId}/subtasks`, {
             method: 'POST',
             body: JSON.stringify({ title })
         });
         
-        if (success) {
+        if (result) {
             inputElement.value = '';
+            // Rafraîchir les tâches immédiatement
             await fetchTasks();
-            showNotification('Sous-tâche ajoutée', 'success');
+            showNotification('Sous-tâche ajoutée avec succès', 'success');
+            
+            // Forcer le rafraîchissement en récupérant aussi les sous-tâches
+            const taskElement = document.querySelector(`.task-item[data-id="${taskId}"]`);
+            if (taskElement) {
+                taskElement.classList.add('has-subtasks');
+            }
         }
     } catch (error) {
+        console.error('Erreur ajout sous-tâche:', error);
         showNotification('Erreur lors de l\'ajout de la sous-tâche', 'error');
     }
 }

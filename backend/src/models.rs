@@ -45,7 +45,7 @@ pub struct Task {
 }
 
 // Structure pour les Sous-tâches
-#[derive(Serialize, Deserialize, FromRow)]
+#[derive(Serialize, Deserialize, FromRow, Clone)]
 pub struct Subtask {
     pub id: i32,
     pub task_id: i32,
@@ -66,6 +66,14 @@ pub struct UpdateTaskRequest {
     pub title: Option<String>,
     pub days: Option<Vec<i32>>,
     pub active: Option<bool>,
+    pub subtasks: Option<Vec<SubtaskUpdate>>, // Nouveau champ pour les sous-tâches
+}
+
+#[derive(Deserialize, Clone)]
+pub struct SubtaskUpdate {
+    pub id: Option<i32>, // Optionnel pour les nouvelles sous-tâches
+    pub title: String,
+    pub completed: Option<bool>,
 }
 
 #[derive(Deserialize)]
@@ -83,4 +91,9 @@ pub struct UpdateSubtaskRequest {
 pub struct ToggleSubtaskRequest {
     pub task_id: i32,
     pub subtask_id: i32,
+}
+
+#[derive(Deserialize)]
+pub struct UpdatePrioritiesRequest {
+    pub ordered_task_ids: Vec<i32>,
 }

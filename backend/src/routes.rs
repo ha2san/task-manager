@@ -35,47 +35,70 @@ pub async fn get_today_tasks(
     State(pool): State<PgPool>,
     Extension(user_id): Extension<Uuid>,
 ) -> Result<Json<Vec<serde_json::Value>>, StatusCode> {
-    // Récupérer les tâches du jour
+    // Récupérer les tâches du jour avec ou sans completion
     let tasks = sqlx::query!(
         r#"
         SELECT t.id, t.title, t.active, 
-            COALESCE(tc.completed, false) as "completed!",
-            COALESCE(tc.priority, 0) as "priority!",
-            EXISTS(SELECT 1 FROM subtasks s WHERE s.task_id = t.id) as "has_subtasks!"
+               COALESCE(tc.completed, false) as "completed!",
+               COALESCE(tc.priority, 0) as "priority!",
+               EXISTS(SELECT 1 FROM subtasks s WHERE s.task_id = t.id) as "has_subtasks!"
         FROM tasks t
         JOIN task_days td ON t.id = td.task_id
         LEFT JOIN task_completions tc ON t.id = tc.task_id AND tc.date = current_date
         WHERE t.user_id = $1 
           AND td.day_of_week = extract(isodow from current_date)
-          AND t.active = true AND t.deleted = false
-        ORDER BY tc.priority ASC
+          AND t.active = true 
+          AND t.deleted = false
+        ORDER BY tc.priority ASC, t.id ASC
         "#,
         user_id
     )
     .fetch_all(&pool)
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|e| {
+        eprintln!("Erreur lors de la récupération des tâches: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     let mut result = Vec::new();
     
     for task in tasks {
-        // Récupérer les sous-tâches
-        let subtasks = sqlx::query!(
-            r#"
-            SELECT id, title, completed, priority
-            FROM subtasks
-            WHERE task_id = $1
-            ORDER BY priority ASC
-            "#,
-            task.id
-        )
-        .fetch_all(&pool)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        // Récupérer les sous-tâches SI la tâche en a
+        let subtasks = if task.has_subtasks {
+            sqlx::query!(
+                r#"
+                SELECT id, title, completed, priority
+                FROM subtasks
+                WHERE task_id = $1
+                ORDER BY priority ASC, id ASC
+                "#,
+                task.id
+            )
+            .fetch_all(&pool)
+            .await
+            .map_err(|e| {
+                eprintln!("Erreur lors de la récupération des sous-tâches: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?
+        } else {
+            vec![]
+        };
 
         // Calculer si la tâche est complétée (toutes les sous-tâches doivent être complétées)
         let all_subtasks_completed = !subtasks.is_empty() && subtasks.iter().all(|st| st.completed);
-        let completed = if task.has_subtasks { all_subtasks_completed } else { task.completed };
+        let completed = if task.has_subtasks { 
+            all_subtasks_completed 
+        } else { 
+            task.completed 
+        };
+
+        // Calculer le pourcentage de complétion des sous-tâches
+        let subtask_completion = if subtasks.is_empty() {
+            0
+        } else {
+            let completed_count = subtasks.iter().filter(|st| st.completed).count();
+            (completed_count as f64 / subtasks.len() as f64 * 100.0) as i32
+        };
 
         let task_json = serde_json::json!({
             "id": task.id,
@@ -84,6 +107,8 @@ pub async fn get_today_tasks(
             "completed": completed,
             "priority": task.priority,
             "has_subtasks": task.has_subtasks,
+            "subtasks_count": subtasks.len(),
+            "subtask_completion": subtask_completion,
             "subtasks": subtasks.into_iter().map(|st| serde_json::json!({
                 "id": st.id,
                 "title": st.title,
@@ -181,12 +206,15 @@ pub async fn get_all_tasks(
     )
     .fetch_all(&pool)
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|e| {
+        eprintln!("Erreur récupération tâches: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     let mut result = Vec::new();
     
     for row in rows {
-        // Récupérer les sous-tâches
+        // Récupérer les sous-tâches si la tâche en a
         let subtasks = if row.has_subtasks {
             sqlx::query!(
                 "SELECT id, title, completed, priority FROM subtasks WHERE task_id = $1 ORDER BY priority ASC",
@@ -194,7 +222,10 @@ pub async fn get_all_tasks(
             )
             .fetch_all(&pool)
             .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+            .map_err(|e| {
+                eprintln!("Erreur récupération sous-tâches: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?
         } else {
             vec![]
         };
@@ -205,6 +236,7 @@ pub async fn get_all_tasks(
             "active": row.active,
             "has_subtasks": row.has_subtasks,
             "days": row.days,
+            "subtasks_count": subtasks.len(),
             "subtasks": subtasks.into_iter().map(|st| serde_json::json!({
                 "id": st.id,
                 "title": st.title,
@@ -399,52 +431,83 @@ pub async fn create_subtask(
     State(pool): State<PgPool>,
     Extension(user_id): Extension<Uuid>,
     Json(payload): Json<CreateSubtaskRequest>,
-) -> Result<StatusCode, StatusCode> {
+) -> Result<Json<serde_json::Value>, StatusCode> {
+    let mut tx = pool
+        .begin()
+        .await
+        .map_err(|e| {
+            eprintln!("Erreur début transaction: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
     // Vérifier que l'utilisateur a accès à cette tâche
     let task_exists = sqlx::query!(
-        "SELECT id FROM tasks WHERE id = $1 AND user_id = $2",
+        "SELECT id, has_subtasks FROM tasks WHERE id = $1 AND user_id = $2",
         task_id,
         user_id
     )
-    .fetch_optional(&pool)
+    .fetch_optional(&mut *tx)
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    if task_exists.is_none() {
-        return Err(StatusCode::NOT_FOUND);
-    }
+    .map_err(|e| {
+        eprintln!("Erreur vérification tâche: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?
+    .ok_or(StatusCode::NOT_FOUND)?;
 
     // Trouver la priorité la plus élevée pour ajouter à la fin
     let max_priority = sqlx::query!(
         "SELECT COALESCE(MAX(priority), -1) as max_priority FROM subtasks WHERE task_id = $1",
         task_id
     )
-    .fetch_one(&pool)
+    .fetch_one(&mut *tx)
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|e| {
+        eprintln!("Erreur récupération priorité max: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     // Créer la sous-tâche
-    sqlx::query!(
-        "INSERT INTO subtasks (task_id, title, priority) VALUES ($1, $2, $3)",
+    let subtask = sqlx::query!(
+        "INSERT INTO subtasks (task_id, title, priority) VALUES ($1, $2, $3) RETURNING id",
         task_id,
         payload.title,
         max_priority.max_priority.unwrap_or(-1) + 1
     )
-    .execute(&pool)
+    .fetch_one(&mut *tx)
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|e| {
+        eprintln!("Erreur création sous-tâche: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
-    // Marquer que la tâche a des sous-tâches
-    sqlx::query!(
-        "UPDATE tasks SET has_subtasks = true WHERE id = $1",
-        task_id
-    )
-    .execute(&pool)
-    .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    // Marquer que la tâche a des sous-tâches (si ce n'est pas déjà fait)
+    if !task_exists.has_subtasks {
+        sqlx::query!(
+            "UPDATE tasks SET has_subtasks = true WHERE id = $1",
+            task_id
+        )
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| {
+            eprintln!("Erreur mise à jour has_subtasks: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+    }
 
-    Ok(StatusCode::CREATED)
+    tx.commit()
+        .await
+        .map_err(|e| {
+            eprintln!("Erreur commit transaction: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    Ok(Json(serde_json::json!({
+        "success": true,
+        "subtask_id": subtask.id,
+        "message": "Sous-tâche créée avec succès"
+    })))
 }
+
 
 /// Mettre à jour une sous-tâche
 pub async fn update_subtask(
@@ -574,7 +637,7 @@ pub async fn delete_subtask(
     Ok(StatusCode::OK)
 }
 
-/// Met à jour les informations d'une tâche (titre ou jours).
+/// Met à jour les informations d'une tâche (titre, jours, statut et sous-tâches).
 pub async fn update_task(
     Path(id): Path<i32>,
     State(pool): State<PgPool>,
@@ -589,18 +652,24 @@ pub async fn update_task(
     )
     .fetch_optional(&pool)
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|e| {
+        eprintln!("Erreur vérification tâche: {}", e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     if task_exists.is_none() {
         return Err(StatusCode::NOT_FOUND);
     }
 
     // 1. Mise à jour du titre
-    if let Some(title) = payload.title {
+    if let Some(title) = &payload.title {
         sqlx::query!("UPDATE tasks SET title = $1 WHERE id = $2", title, id)
             .execute(&pool)
             .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+            .map_err(|e| {
+                eprintln!("Erreur mise à jour titre: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
     }
 
     // 2. Mise à jour du statut actif/archivé
@@ -608,32 +677,109 @@ pub async fn update_task(
         sqlx::query!("UPDATE tasks SET active = $1 WHERE id = $2", active, id)
             .execute(&pool)
             .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+            .map_err(|e| {
+                eprintln!("Erreur mise à jour statut: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
     }
 
     // 3. Mise à jour des jours
-    if let Some(days) = payload.days {
+    if let Some(days) = &payload.days {
         let mut tx = pool
             .begin()
             .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+            .map_err(|e| {
+                eprintln!("Erreur début transaction: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
+        
         sqlx::query!("DELETE FROM task_days WHERE task_id = $1", id)
             .execute(&mut *tx)
             .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+            .map_err(|e| {
+                eprintln!("Erreur suppression jours: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
+        
         for day in days {
             sqlx::query!(
                 "INSERT INTO task_days (task_id, day_of_week) VALUES ($1, $2)",
                 id,
                 day
             )
-                .execute(&mut *tx)
-                .await
-                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-            }
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| {
+                eprintln!("Erreur insertion jour {}: {}", day, e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
+        }
+        
         tx.commit()
             .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+            .map_err(|e| {
+                eprintln!("Erreur commit transaction: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
+    }
+
+    // 4. Mise à jour des sous-tâches si fournies
+    if let Some(subtasks) = &payload.subtasks {
+        let mut tx = pool
+            .begin()
+            .await
+            .map_err(|e| {
+                eprintln!("Erreur début transaction sous-tâches: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
+
+        // Supprimer les sous-tâches existantes
+        sqlx::query!("DELETE FROM subtasks WHERE task_id = $1", id)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| {
+                eprintln!("Erreur suppression sous-tâches: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
+
+        // Ajouter les nouvelles sous-tâches
+        for (priority, subtask) in subtasks.iter().enumerate() {
+            if !subtask.title.trim().is_empty() {
+                sqlx::query!(
+                    "INSERT INTO subtasks (task_id, title, priority) VALUES ($1, $2, $3)",
+                    id,
+                    subtask.title,
+                    priority as i32
+                )
+                .execute(&mut *tx)
+                .await
+                .map_err(|e| {
+                    eprintln!("Erreur insertion sous-tâche: {}", e);
+                    StatusCode::INTERNAL_SERVER_ERROR
+                })?;
+            }
+        }
+
+        // Mettre à jour le flag has_subtasks
+        let has_subtasks = !subtasks.is_empty();
+        sqlx::query!(
+            "UPDATE tasks SET has_subtasks = $1 WHERE id = $2",
+            has_subtasks,
+            id
+        )
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| {
+            eprintln!("Erreur mise à jour has_subtasks: {}", e);
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+        tx.commit()
+            .await
+            .map_err(|e| {
+                eprintln!("Erreur commit sous-tâches: {}", e);
+                StatusCode::INTERNAL_SERVER_ERROR
+            })?;
     }
 
     Ok(StatusCode::OK)

@@ -353,8 +353,8 @@
                                 <i class="fas fa-list-check"></i>
                                 Sous-tâches
                             </label>
-                            <div class="edit-subtasks" id="edit-subtasks">
-                                <!-- Sous-tâches existantes -->
+                            <div class="edit-subtasks-container" id="edit-subtasks-container">
+                                <!-- Sous-tâches existantes et nouvelles -->
                             </div>
                             <button type="button" class="btn-action outline" onclick="addEditSubtask()">
                                 <i class="fas fa-plus"></i>
@@ -564,16 +564,17 @@
             }
 
             function addEditSubtask() {
-                const container = document.getElementById('edit-subtasks');
+                const container = document.getElementById('edit-subtasks-container');
                 const div = document.createElement('div');
                 div.className = 'edit-subtask-row';
                 div.innerHTML = `
-                <input type="text" class="edit-subtask-input" placeholder="Nouvelle sous-tâche">
+                <input type="text" class="edit-subtask-input" placeholder="Nouvelle sous-tâche" data-id="">
                 <button type="button" class="btn-icon remove-subtask" onclick="this.parentElement.remove()">
                     <i class="fas fa-times"></i>
                 </button>
             `;
                 container.appendChild(div);
+                div.querySelector('input').focus();
             }
 
             async function fetchAllTasks() {
@@ -762,7 +763,7 @@
                 });
 
                 // Sous-tâches
-                const subtasksContainer = document.getElementById('edit-subtasks');
+                const subtasksContainer = document.getElementById('edit-subtasks-container');
                 subtasksContainer.innerHTML = '';
 
                 if (task.subtasks && task.subtasks.length > 0) {
@@ -770,7 +771,7 @@
                         const div = document.createElement('div');
                         div.className = 'edit-subtask-row';
                         div.innerHTML = `
-                        <input type="text" class="edit-subtask-input" value="${escapeHtml(subtask.title)}">
+                        <input type="text" class="edit-subtask-input" value="${escapeHtml(subtask.title)}" data-id="${subtask.id}">
                         <button type="button" class="btn-icon remove-subtask" onclick="this.parentElement.remove()">
                             <i class="fas fa-times"></i>
                         </button>
@@ -784,14 +785,20 @@
             }
 
             async function saveTaskEdit() {
-                const taskId = document.getElementById('edit-task-id').value;
+                const taskId = parseInt(document.getElementById('edit-task-id').value);
                 const title = document.getElementById('edit-task-title').value.trim();
                 const active = document.getElementById('edit-task-active').checked;
                 const days = Array.from(document.querySelectorAll('input[name="edit-days"]:checked'))
                     .map(cb => parseInt(cb.value));
-                const subtaskInputs = Array.from(document.querySelectorAll('.edit-subtask-input'))
-                    .map(input => input.value.trim())
-                    .filter(text => text.length > 0);
+                
+                // Récupérer les sous-tâches
+                const subtaskInputs = document.querySelectorAll('.edit-subtask-input');
+                const subtasks = Array.from(subtaskInputs)
+                    .map(input => ({
+                        id: input.dataset.id ? parseInt(input.dataset.id) : null,
+                        title: input.value.trim()
+                    }))
+                    .filter(item => item.title.length > 0);
 
                 if (!title) {
                     showNotification('Le titre est requis', 'error');
@@ -804,23 +811,45 @@
                 }
 
                 try {
-                    // Mettre à jour la tâche
-                    await apiFetch(`/tasks/${taskId}`, {
-                        method: 'POST',
-                        body: JSON.stringify({ title, days, active })
-                    });
+                    // Préparer les données pour l'envoi
+                    const payload = {
+                        title,
+                        days,
+                        active
+                    };
 
-                    // Mettre à jour les sous-tâches (simplifié - dans une vraie app, on gérerait mieux)
-                    if (subtaskInputs.length > 0) {
-                        // Pour simplifier, on ne met à jour que les titres
-                        // Dans une vraie app, on ferait des requêtes spécifiques
+                    // Ajouter les sous-tâches si elles existent
+                    if (subtasks.length > 0) {
+                        payload.subtasks = subtasks.map(st => ({
+                            id: st.id,
+                            title: st.title,
+                            completed: false
+                        }));
                     }
 
-                    showNotification('Tâche mise à jour', 'success');
-                    closeEditModal();
-                    fetchAllTasks();
+                    console.log('Envoi des données:', payload);
+
+                    // Mettre à jour la tâche
+                    const result = await apiFetch(`/tasks/${taskId}`, {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (result) {
+                        showNotification('Tâche mise à jour avec succès', 'success');
+                        closeEditModal();
+                        await fetchAllTasks(); // Rafraîchir la liste
+                        
+                        // Rafraîchir aussi le tableau de bord si ouvert
+                        if (typeof fetchTasks === 'function') {
+                            setTimeout(fetchTasks, 500);
+                        }
+                    } else {
+                        showNotification('Erreur lors de la mise à jour', 'error');
+                    }
                 } catch (error) {
-                    showNotification('Erreur lors de la mise à jour', 'error');
+                    console.error('Erreur détaillée:', error);
+                    showNotification('Erreur lors de la mise à jour: ' + error.message, 'error');
                 }
             }
 
